@@ -47,6 +47,13 @@ import {
   CheckCircle2
 } from 'lucide-react';
 
+const VIETNAMESE_STOP_WORDS = new Set([
+  'năm', 'tỉnh', 'cho', 'vào', 'về', 'của', 'các', 'những', 'với', 'tại', 
+  'trong', 'sẽ', 'đã', 'được', 'là', 'mùa', 'tin', 'bài', 'viết', 'và',
+  '2026', '2025', '2024', 'đến', 'theo', 'như', 'từ', 'trên', 'qua', 'số',
+  'mới', 'nay', 'ra', 'để', 'có', 'không'
+]);
+
 export default function App() {
   const [articles, setArticles] = useState<ArticleItem[]>(INITIAL_ARTICLES);
   const [alerts, setAlerts] = useState<AlertNotification[]>(INITIAL_ALERTS);
@@ -100,14 +107,24 @@ export default function App() {
           (art.entities ? art.entities.map(e => e.name).join(' ') : '')
         ).toLowerCase();
 
-        // Match if text contains full query string OR if all search words are present OR majority of words match
-        const matchesFull = combinedText.includes(rawQ);
-        const matchesAllWords = searchWords.length > 0 && searchWords.every((word) => combinedText.includes(word));
-        const matchedWordsCount = searchWords.filter((w) => combinedText.includes(w)).length;
-        const matchesMajorityWords = searchWords.length >= 3 && matchedWordsCount >= Math.ceil(searchWords.length * 0.6);
+        // Direct full phrase match
+        if (combinedText.includes(rawQ)) {
+          return true;
+        }
 
-        if (!matchesFull && !matchesAllWords && !matchesMajorityWords) {
-          return false;
+        // Core words filtering (excluding Vietnamese stop words/years)
+        const coreWords = searchWords.filter(w => w.length >= 2 && !VIETNAMESE_STOP_WORDS.has(w));
+
+        if (coreWords.length > 0) {
+          const matchesAllCore = coreWords.every(cw => combinedText.includes(cw));
+          if (!matchesAllCore) {
+            return false;
+          }
+        } else {
+          const matchesAllWords = searchWords.every(w => combinedText.includes(w));
+          if (!matchesAllWords) {
+            return false;
+          }
         }
       }
 

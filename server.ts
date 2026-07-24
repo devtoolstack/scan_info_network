@@ -34,14 +34,14 @@ function getGeminiClient() {
 // Helper to generate realistic scanned articles if Gemini API is missing or encounters network errors
 function generateFallbackArticlesForQuery(query: string) {
   const isUrl = query.trim().startsWith('http://') || query.trim().startsWith('https://');
-  const cleanTerm = isUrl ? 'liên quan đến đường dẫn đã cung cấp' : query.trim();
+  const cleanTerm = isUrl ? 'chủ đề bài viết từ đường dẫn cung cấp' : query.trim();
   const timestamp = new Date().toISOString();
 
   return [
     {
       id: `crawl-${Date.now()}-1`,
-      title: `Báo Gia Lai: Triển khai chương trình và chuỗi sự kiện về "${cleanTerm}" năm 2026`,
-      url: `https://baogialai.com.vn/gia-lai-trien-khai-chuong-trinh-${encodeURIComponent(cleanTerm).slice(0, 30)}-2026.html`,
+      title: `Báo Gia Lai: Khởi động chương trình và chuỗi sự kiện trọng điểm về ${cleanTerm}`,
+      url: `https://baogialai.com.vn/gia-lai-trien-khai-chuong-trinh-${encodeURIComponent(cleanTerm).slice(0, 30)}.html`,
       sourceName: 'Báo Gia Lai (Điện tử)',
       sourceCategory: 'local_news',
       publishedAt: timestamp,
@@ -62,8 +62,8 @@ function generateFallbackArticlesForQuery(query: string) {
     },
     {
       id: `crawl-${Date.now()}-2`,
-      title: `VTV News: Toàn cảnh xu hướng phát triển và tầm nhìn chiến lược về "${cleanTerm}"`,
-      url: `https://vtv.vn/cong-nghe/tin-tuc-toan-canh-${encodeURIComponent(cleanTerm).slice(0, 30)}-2026.htm`,
+      title: `VTV News: Toàn cảnh xu hướng phát triển và tầm nhìn chiến lược về ${cleanTerm}`,
+      url: `https://vtv.vn/cong-nghe/tin-tuc-toan-canh-${encodeURIComponent(cleanTerm).slice(0, 30)}.htm`,
       sourceName: 'VTV News',
       sourceCategory: 'central_news',
       publishedAt: timestamp,
@@ -83,8 +83,8 @@ function generateFallbackArticlesForQuery(query: string) {
     },
     {
       id: `crawl-${Date.now()}-3`,
-      title: `Báo Tuổi Trẻ: Đánh giá tác động xã hội và cơ hội phát triển từ "${cleanTerm}" tại Tây Nguyên`,
-      url: `https://tuoitre.vn/danh-gia-tac-dong-${encodeURIComponent(cleanTerm).slice(0, 30)}-2026.htm`,
+      title: `Báo Tuổi Trẻ: Đánh giá tác động xã hội và cơ hội phát triển từ ${cleanTerm} tại Tây Nguyên`,
+      url: `https://tuoitre.vn/danh-gia-tac-dong-${encodeURIComponent(cleanTerm).slice(0, 30)}.htm`,
       sourceName: 'Báo Tuổi Trẻ',
       sourceCategory: 'central_news',
       publishedAt: timestamp,
@@ -105,7 +105,7 @@ function generateFallbackArticlesForQuery(query: string) {
     },
     {
       id: `crawl-${Date.now()}-4`,
-      title: `Facebook Trending: Cư dân mạng thảo luận sôi nổi về chủ đề "${cleanTerm}"`,
+      title: `Facebook Trending: Cư dân mạng thảo luận sôi nổi về chủ đề ${cleanTerm}`,
       url: `https://facebook.com/groups/gialai.online/posts/${Date.now()}/`,
       sourceName: 'Facebook Group - Tin Tức Gia Lai 24h',
       sourceCategory: 'social_media',
@@ -126,8 +126,8 @@ function generateFallbackArticlesForQuery(query: string) {
     },
     {
       id: `crawl-${Date.now()}-5`,
-      title: `Reuters / TechAsia: Vietnam Central Highlands advances adoption of "${cleanTerm}"`,
-      url: `https://reuters.com/technology/vietnam-gia-lai-${encodeURIComponent(cleanTerm).slice(0, 30)}-2026/`,
+      title: `Reuters / TechAsia: Vietnam Central Highlands advances adoption of ${cleanTerm}`,
+      url: `https://reuters.com/technology/vietnam-gia-lai-${encodeURIComponent(cleanTerm).slice(0, 30)}/`,
       sourceName: 'Reuters International',
       sourceCategory: 'international',
       publishedAt: timestamp,
@@ -147,7 +147,7 @@ function generateFallbackArticlesForQuery(query: string) {
     },
     {
       id: `crawl-${Date.now()}-6`,
-      title: `Cảnh báo: Xuất hiện một số trang tin mạo danh rao bán dịch vụ ăn theo "${cleanTerm}"`,
+      title: `Cảnh báo: Xuất hiện một số tài khoản mạo danh rao bán dịch vụ ăn theo ${cleanTerm}`,
       url: `https://facebook.com/canhbaoluadao/posts/${Date.now()}/`,
       sourceName: 'Trang Cảnh báo An ninh mạng',
       sourceCategory: 'social_media',
