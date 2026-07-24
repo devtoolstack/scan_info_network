@@ -77,6 +77,8 @@ export default function App() {
 
   // Filtered Articles Computation
   const filteredArticles = useMemo(() => {
+    const rawQ = filters.query.trim().toLowerCase();
+
     return articles.filter((art) => {
       // Noise filter
       if (filters.noiseFilterActive && art.isNoise) {
@@ -94,9 +96,16 @@ export default function App() {
       }
 
       // Query filter if entered
-      if (filters.query.trim()) {
-        const rawQ = filters.query.toLowerCase().trim();
-        const searchWords = rawQ.split(/\s+/).filter((w) => w.length > 0);
+      if (rawQ) {
+        // Direct match on scannedQuery (when user searched or scanned this exact query)
+        if (art.scannedQuery && art.scannedQuery.trim().toLowerCase() === rawQ) {
+          return true;
+        }
+
+        // Direct URL match
+        if (art.url && art.url.toLowerCase().includes(rawQ)) {
+          return true;
+        }
 
         const combinedText = (
           art.title + ' ' + 
@@ -112,18 +121,43 @@ export default function App() {
           return true;
         }
 
-        // Core words filtering (excluding Vietnamese stop words/years)
-        const coreWords = searchWords.filter(w => w.length >= 2 && !VIETNAMESE_STOP_WORDS.has(w));
+        // If rawQ is a URL, check domain/path
+        if (rawQ.startsWith('http://') || rawQ.startsWith('https://')) {
+          const domain = rawQ.replace(/^https?:\/\//, '').split('/')[0];
+          return combinedText.includes(domain) || (art.url && art.url.toLowerCase().includes(domain));
+        }
 
-        if (coreWords.length > 0) {
-          const matchesAllCore = coreWords.every(cw => combinedText.includes(cw));
-          if (!matchesAllCore) {
+        // Split query into words
+        const rawWords = rawQ.split(/\s+/).filter(w => w.length > 0);
+
+        // Form bi-gram compound phrases (e.g., "lượng tử", "gia lai")
+        const phrasesToMatch: string[] = [];
+        for (let i = 0; i < rawWords.length - 1; i++) {
+          const bi = `${rawWords[i]} ${rawWords[i+1]}`;
+          if (!VIETNAMESE_STOP_WORDS.has(rawWords[i]) || !VIETNAMESE_STOP_WORDS.has(rawWords[i+1])) {
+            phrasesToMatch.push(bi);
+          }
+        }
+
+        // If bi-grams exist (compound search terms), ALL bi-grams must match as contiguous phrases in the text
+        if (phrasesToMatch.length > 0) {
+          const matchesAllPhrases = phrasesToMatch.every(p => combinedText.includes(p));
+          if (!matchesAllPhrases) {
             return false;
           }
         } else {
-          const matchesAllWords = searchWords.every(w => combinedText.includes(w));
-          if (!matchesAllWords) {
-            return false;
+          // Check core words
+          const coreWords = rawWords.filter(w => w.length >= 2 && !VIETNAMESE_STOP_WORDS.has(w));
+          if (coreWords.length > 0) {
+            const matchesAllCore = coreWords.every(cw => combinedText.includes(cw));
+            if (!matchesAllCore) {
+              return false;
+            }
+          } else {
+            const matchesAllWords = rawWords.every(w => combinedText.includes(w));
+            if (!matchesAllWords) {
+              return false;
+            }
           }
         }
       }

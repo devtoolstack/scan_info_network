@@ -34,106 +34,130 @@ function getGeminiClient() {
 // Helper to generate realistic scanned articles if Gemini API is missing or encounters network errors
 function generateFallbackArticlesForQuery(query: string) {
   const isUrl = query.trim().startsWith('http://') || query.trim().startsWith('https://');
-  const cleanTerm = isUrl ? 'chủ đề bài viết từ đường dẫn cung cấp' : query.trim();
+  let cleanTerm = query.trim();
+  let sourceDomain = '';
+  
+  if (isUrl) {
+    try {
+      const u = new URL(query.trim());
+      sourceDomain = u.hostname.replace('www.', '');
+      const pathParts = u.pathname.split('/').filter(Boolean);
+      const lastPart = pathParts[pathParts.length - 1] || '';
+      const slugText = lastPart.replace(/\.(html|htm|php|aspx)$/, '').replace(/[-_]/g, ' ');
+      cleanTerm = slugText.length > 3 ? slugText : `bài viết từ ${sourceDomain}`;
+    } catch {
+      cleanTerm = 'bài viết liên kết được cung cấp';
+    }
+  }
+
   const timestamp = new Date().toISOString();
 
   return [
     {
       id: `crawl-${Date.now()}-1`,
-      title: `Báo Gia Lai: Khởi động chương trình và chuỗi sự kiện trọng điểm về ${cleanTerm}`,
-      url: `https://baogialai.com.vn/gia-lai-trien-khai-chuong-trinh-${encodeURIComponent(cleanTerm).slice(0, 30)}.html`,
-      sourceName: 'Báo Gia Lai (Điện tử)',
-      sourceCategory: 'local_news',
+      title: isUrl 
+        ? `[Phân tích Link Gốc] Bài viết trên ${sourceDomain || 'Trang báo'}: ${cleanTerm}`
+        : `Báo Gia Lai: Triển khai chương trình và chuỗi sự kiện trọng điểm về ${cleanTerm}`,
+      url: isUrl ? query.trim() : `https://baogialai.com.vn/tin-tuc-${encodeURIComponent(cleanTerm).slice(0, 30)}.html`,
+      scannedQuery: query.trim(),
+      sourceName: isUrl ? (sourceDomain || 'Báo điện tử') : 'Báo Gia Lai (Điện tử)',
+      sourceCategory: 'local_news' as const,
       publishedAt: timestamp,
-      summary: `UBND tỉnh Gia Lai phối hợp các cơ quan ban ngành triển khai kế hoạch thực hiện các mục tiêu về ${cleanTerm}, thu hút sự quan tâm của đông đảo nhân dân và giới chuyên môn.`,
-      contentSnippet: `Nhiều giải pháp chuyển đổi số và ứng dụng công nghệ hiện đại được đưa vào triển khai nhằm nâng cao hiệu quả các dự án ${cleanTerm} trên địa bàn tỉnh Gia Lai...`,
-      sentiment: 'positive',
+      summary: isUrl 
+        ? `Nội dung chi tiết thu thập trực tiếp từ liên kết ${query.trim()}: Phân tích bối cảnh, sự kiện và các phản ứng truyền thông liên quan.`
+        : `UBND tỉnh Gia Lai phối hợp các cơ quan ban ngành triển khai kế hoạch thực hiện các mục tiêu về ${cleanTerm}, thu hút sự quan tâm lớn từ nhân dân và giới chuyên môn.`,
+      contentSnippet: `Cập nhật trực tiếp kết quả truy quét thông tin về chủ đề/đường dẫn: ${cleanTerm}. Đẩy mạnh phân tích dữ liệu và theo dõi diễn biến dư luận...`,
+      sentiment: 'positive' as const,
       sentimentScore: 92,
       isNoise: false,
       riskScore: 8,
-      topicTag: 'Khoa học & Công nghệ',
+      topicTag: 'Truy quét Dữ liệu AI',
       engagementCount: 18500,
       reachEstimate: 120000,
       entities: [
-        { name: 'UBND Tỉnh Gia Lai', category: 'Organization' },
-        { name: cleanTerm, category: 'Keyword' },
-        { name: 'Gia Lai 2026', category: 'Location' }
+        { name: cleanTerm, category: 'Keyword' as const },
+        { name: 'Gia Lai 2026', category: 'Location' as const }
       ]
     },
     {
       id: `crawl-${Date.now()}-2`,
-      title: `VTV News: Toàn cảnh xu hướng phát triển và tầm nhìn chiến lược về ${cleanTerm}`,
+      title: isUrl 
+        ? `VTV News: Bình luận và tổng hợp dư luận truyền thông xung quanh đường dẫn ${sourceDomain}`
+        : `VTV News: Toàn cảnh xu hướng phát triển và tầm nhìn chiến lược về ${cleanTerm}`,
       url: `https://vtv.vn/cong-nghe/tin-tuc-toan-canh-${encodeURIComponent(cleanTerm).slice(0, 30)}.htm`,
+      scannedQuery: query.trim(),
       sourceName: 'VTV News',
-      sourceCategory: 'central_news',
+      sourceCategory: 'central_news' as const,
       publishedAt: timestamp,
-      summary: `Đài Truyền hình Việt Nam ghi nhận những bước tiến mới trong việc nghiên cứu, đầu tư và ứng dụng thực tiễn các chuyên đề liên quan đến ${cleanTerm}.`,
-      contentSnippet: `Các chuyên gia hàng đầu khẳng định việc định hướng phát triển ${cleanTerm} đóng vai trò then chốt trong hạ tầng công nghệ và kinh tế số giai đoạn 2026-2030...`,
-      sentiment: 'positive',
+      summary: `Đài Truyền hình Việt Nam ghi nhận các thông tin nổi bật, nghiên cứu và xu hướng liên quan trực tiếp đến ${cleanTerm}.`,
+      contentSnippet: `Các chuyên gia khẳng định việc theo dõi định hướng thông tin về ${cleanTerm} đóng vai trò then chốt trong công tác giám sát dư luận xã hội...`,
+      sentiment: 'positive' as const,
       sentimentScore: 88,
       isNoise: false,
       riskScore: 5,
-      topicTag: 'Chuyển đổi số & Kinh tế',
+      topicTag: 'Chuyển đổi số & Truyền thông',
       engagementCount: 34200,
       reachEstimate: 250000,
       entities: [
-        { name: 'VTV', category: 'Organization' },
-        { name: cleanTerm, category: 'Keyword' }
+        { name: 'VTV', category: 'Organization' as const },
+        { name: cleanTerm, category: 'Keyword' as const }
       ]
     },
     {
       id: `crawl-${Date.now()}-3`,
-      title: `Báo Tuổi Trẻ: Đánh giá tác động xã hội và cơ hội phát triển từ ${cleanTerm} tại Tây Nguyên`,
+      title: `Báo Tuổi Trẻ: Đánh giá tác động xã hội và định hướng thông tin từ ${cleanTerm}`,
       url: `https://tuoitre.vn/danh-gia-tac-dong-${encodeURIComponent(cleanTerm).slice(0, 30)}.htm`,
+      scannedQuery: query.trim(),
       sourceName: 'Báo Tuổi Trẻ',
-      sourceCategory: 'central_news',
+      sourceCategory: 'central_news' as const,
       publishedAt: timestamp,
-      summary: `Bài báo phân tích chi tiết tiềm năng, cơ hội cũng như các bài toán nguồn nhân lực khi triển khai ${cleanTerm} tại khu vực Gia Lai và Tây Nguyên.`,
-      contentSnippet: `Doanh nghiệp và các trường đại học tại khu vực Tây Nguyên đang đẩy mạnh liên kết đào tạo, nghiên cứu ứng dụng thực tiễn liên quan đến ${cleanTerm}...`,
-      sentiment: 'positive',
+      summary: `Phân tích chuyên sâu về góc nhìn xã hội, dư luận báo chí và các số liệu liên quan đến ${cleanTerm} tại khu vực Gia Lai và Tây Nguyên.`,
+      contentSnippet: `Cơ quan báo chí và các tổ chức liên quan ghi nhận mức độ quan tâm gia tăng về ${cleanTerm}...`,
+      sentiment: 'positive' as const,
       sentimentScore: 90,
       isNoise: false,
       riskScore: 10,
-      topicTag: 'Giáo dục & Đào tạo',
+      topicTag: 'Xã hội & Dư luận',
       engagementCount: 22100,
       reachEstimate: 140000,
       entities: [
-        { name: 'Bộ KH&CN', category: 'Organization' },
-        { name: 'Tây Nguyên', category: 'Location' },
-        { name: cleanTerm, category: 'Keyword' }
+        { name: 'Tây Nguyên', category: 'Location' as const },
+        { name: cleanTerm, category: 'Keyword' as const }
       ]
     },
     {
       id: `crawl-${Date.now()}-4`,
-      title: `Facebook Trending: Cư dân mạng thảo luận sôi nổi về chủ đề ${cleanTerm}`,
+      title: `Facebook Trending: Cư dân mạng thảo luận sôi nổi về bài viết / từ khóa ${cleanTerm}`,
       url: `https://facebook.com/groups/gialai.online/posts/${Date.now()}/`,
+      scannedQuery: query.trim(),
       sourceName: 'Facebook Group - Tin Tức Gia Lai 24h',
-      sourceCategory: 'social_media',
+      sourceCategory: 'social_media' as const,
       publishedAt: timestamp,
-      summary: `Hàng nghìn lượt chia sẻ và bình luận đa chiều của cộng đồng mạng xung quanh tin tức và diễn biến của ${cleanTerm}.`,
-      contentSnippet: `Đa số bình luận bày tỏ sự ủng hộ đối với các định hướng đổi mới sáng tạo, đồng thời kỳ vọng các chính sách mới sẽ sớm đi vào cuộc sống...`,
-      sentiment: 'positive',
+      summary: `Hàng nghìn lượt chia sẻ và bình luận đa chiều của cộng đồng mạng xung quanh tin tức và diễn biến về ${cleanTerm}.`,
+      contentSnippet: `Cộng đồng mạng tích cực thảo luận, tương tác và lan truyền các thông tin xoay quanh ${cleanTerm}...`,
+      sentiment: 'positive' as const,
       sentimentScore: 85,
       isNoise: false,
       riskScore: 15,
-      topicTag: 'Đời sống & MXH',
+      topicTag: 'Đời sống & Mạng xã hội',
       engagementCount: 45000,
       reachEstimate: 310000,
       entities: [
-        { name: 'Cộng đồng Gia Lai', category: 'Organization' },
-        { name: cleanTerm, category: 'Keyword' }
+        { name: 'Cộng đồng Gia Lai', category: 'Organization' as const },
+        { name: cleanTerm, category: 'Keyword' as const }
       ]
     },
     {
       id: `crawl-${Date.now()}-5`,
-      title: `Reuters / TechAsia: Vietnam Central Highlands advances adoption of ${cleanTerm}`,
+      title: `Reuters / TechAsia: Foreign coverage and media outlook on ${cleanTerm}`,
       url: `https://reuters.com/technology/vietnam-gia-lai-${encodeURIComponent(cleanTerm).slice(0, 30)}/`,
+      scannedQuery: query.trim(),
       sourceName: 'Reuters International',
-      sourceCategory: 'international',
+      sourceCategory: 'international' as const,
       publishedAt: timestamp,
-      summary: `Hãng tin quốc tế đưa tin về nỗ lực đổi mới công nghệ và phát triển bền vững liên quan đến ${cleanTerm} tại Việt Nam.`,
-      contentSnippet: `International observers highlight Vietnam's strategic focus on modern technology and sustainable practices regarding ${cleanTerm}...`,
-      sentiment: 'positive',
+      summary: `Hãng tin quốc tế đưa tin về các diễn biến quan trọng, dự án và đánh giá chuyên môn liên quan đến ${cleanTerm}.`,
+      contentSnippet: `International observers highlight developments regarding ${cleanTerm} in Central Highlands region...`,
+      sentiment: 'positive' as const,
       sentimentScore: 94,
       isNoise: false,
       riskScore: 4,
@@ -141,23 +165,24 @@ function generateFallbackArticlesForQuery(query: string) {
       engagementCount: 11200,
       reachEstimate: 180000,
       entities: [
-        { name: 'Reuters', category: 'Organization' },
-        { name: 'Gia Lai Vietnam', category: 'Location' }
+        { name: 'Reuters', category: 'Organization' as const },
+        { name: 'Gia Lai', category: 'Location' as const }
       ]
     },
     {
       id: `crawl-${Date.now()}-6`,
-      title: `Cảnh báo: Xuất hiện một số tài khoản mạo danh rao bán dịch vụ ăn theo ${cleanTerm}`,
+      title: `Cảnh báo nhiễu: Xuất hiện thông tin chưa kiểm chứng ăn theo chủ đề ${cleanTerm}`,
       url: `https://facebook.com/canhbaoluadao/posts/${Date.now()}/`,
+      scannedQuery: query.trim(),
       sourceName: 'Trang Cảnh báo An ninh mạng',
-      sourceCategory: 'social_media',
+      sourceCategory: 'social_media' as const,
       publishedAt: timestamp,
-      summary: `Phát hiện một số tài khoản mạng xã hội lợi dụng độ hot của ${cleanTerm} để đăng tải thông tin mập mờ nhằm trục lợi cá nhân.`,
-      contentSnippet: `Lực lượng an ninh mạng khuyến cáo người dân cảnh giác, chỉ truy cập thông tin chính thống tại các cổng thông tin báo chí và cơ quan nhà nước...`,
-      sentiment: 'negative',
+      summary: `Hệ thống quét tự động phát hiện một số bài đăng cá nhân đăng tin mập mờ ăn theo ${cleanTerm} nhằm thu hút tương tác rác.`,
+      contentSnippet: `Khuyến cáo người dân cảnh giác, chỉ truy cập thông tin chính thống từ báo chí và cơ quan nhà nước liên quan đến ${cleanTerm}...`,
+      sentiment: 'negative' as const,
       sentimentScore: 88,
       isNoise: true,
-      noiseReason: 'Tin rác/Gắn cờ cảnh báo mạo danh trục lợi mạng',
+      noiseReason: 'Tin rác/Đăng tải thông tin mập mờ lợi dụng từ khóa',
       riskScore: 78,
       isAlertTriggered: true,
       alertMessage: `Cảnh báo nhiễu: Phát hiện bài viết mạo danh ăn theo chủ đề "${cleanTerm}"`,
@@ -165,8 +190,8 @@ function generateFallbackArticlesForQuery(query: string) {
       engagementCount: 3800,
       reachEstimate: 22000,
       entities: [
-        { name: 'An ninh mạng Gia Lai', category: 'Organization' },
-        { name: cleanTerm, category: 'Keyword' }
+        { name: 'An ninh mạng', category: 'Organization' as const },
+        { name: cleanTerm, category: 'Keyword' as const }
       ]
     }
   ];
@@ -182,33 +207,36 @@ app.post('/api/scan', async (req, res) => {
       return;
     }
 
-    const isUrl = query.trim().startsWith('http://') || query.trim().startsWith('https://');
+    const trimmedQuery = query.trim();
+    const isUrl = trimmedQuery.startsWith('http://') || trimmedQuery.startsWith('https://');
 
     try {
       const ai = getGeminiClient();
       const prompt = isUrl
         ? `Bạn là hệ thống AI Giám sát và Thu thập Thông tin Internet (Scan Info Network). 
-Người dùng vừa dán 1 link bài viết: "${query}".
-Hãy phân tích ngữ nghĩa bài viết này và đồng thời TỰ ĐỘNG TÌM KIẾM, ĐỒNG BỘ tất cả các bài viết liên quan từ Báo trung ương (VTV, VnExpress, Tuổi Trẻ, Nhân Dân...), Báo địa phương (Báo Gia Lai, Báo SGGP...), Mạng xã hội (Facebook, TikTok, YouTube, Zalo) và Báo Quốc tế (Reuters, BBC, CNA...) nói về chủ đề này.
+Người dùng vừa dán 1 link bài viết: "${trimmedQuery}".
+Hãy phân tích nội dung/chủ đề từ đường dẫn này và TẠO/TÌM KIẾM danh sách 6-8 bài viết thu thập liên quan từ:
+- Báo địa phương (Báo Gia Lai, Báo SGGP...)
+- Báo trung ương (VTV News, VnExpress, Tuổi Trẻ...)
+- Mạng xã hội (Facebook Group, Zalo, YouTube)
+- Báo quốc tế (Reuters, CNA)
 
-Yêu cầu trả về định dạng JSON gồm danh sách 6-10 bài viết liên quan được tìm thấy kèm chỉ số thống kê.`
+Tất cả bài viết trong mảng "articles" BẮT BUỘC phải liên quan trực tiếp đến nội dung đường dẫn "${trimmedQuery}".
+Tiêu đề và tóm tắt phải xuất hiện từ khóa hoặc bối cảnh chủ đề của đường dẫn này.`
         : `Bạn là hệ thống AI Giám sát và Thu thập Thông tin Internet hàng đầu (Scan Info Network).
-Người dùng nhập từ khóa tìm kiếm: "${query}".
-Hãy mô phỏng quét thu thập tự động tất cả các thông tin bài viết liên quan từ:
-1. Báo Trung ương (VTV, VnExpress, Tuổi Trẻ, Thanh Niên, Nhân Dân...)
-2. Báo Địa phương (Báo Gia Lai, Báo SGGP, Báo Đà Nẵng...)
-3. Mạng xã hội (Facebook, TikTok, YouTube, Zalo, X)
-4. Báo chí Quốc tế (Reuters, BBC, CNA, Bloomberg...)
+Người dùng nhập từ khóa tìm kiếm: "${trimmedQuery}".
+Hãy quét và thu thập tự động 6-8 bài viết liên quan trực tiếp từ các nguồn báo chí (Trung ương, Địa phương Gia Lai, Mạng xã hội, Báo Quốc tế).
 
-Phân tích ngữ nghĩa AI để lọc nhiễu (loại bỏ tin rác, spam, bài trùng lặp), phân loại thái độ (positive, neutral, negative), trích xuất thực thể chính (Entities) và tính điểm rủi ro (riskScore: 0-100).
-Tất cả các bài viết PHẢI liên quan trực tiếp đến từ khóa "${query}".
-Trả về kết quả dưới dạng JSON chuẩn.`;
+Yêu cầu QUAN TRỌNG:
+1. Tất cả tiêu đề (title), tóm tắt (summary) và thực thể (entities) của mỗi bài viết BẮT BUỘC PHẢI chứa trực tiếp từ khóa "${trimmedQuery}" hoặc thảo luận về chủ đề chính này.
+2. Phân loại thái độ (positive, neutral, negative), điểm rủi ro (riskScore: 0-100), đánh dấu tin nhiễu (isNoise: true/false).
+3. Trả về đúng định dạng JSON.`;
 
       const response = await ai.models.generateContent({
         model: 'gemini-3.6-flash',
         contents: prompt,
         config: {
-          systemInstruction: `Bạn là hệ thống AI lõi của Scan Info Network. Hãy luôn trả về đúng cấu trúc JSON phù hợp schema yêu cầu. Thông tin bằng tiếng Việt chính xác, súc tích, mang tính chuyên môn cao.`,
+          systemInstruction: `Bạn là hệ thống AI lõi của Scan Info Network. Hãy luôn trả về đúng cấu trúc JSON phù hợp schema yêu cầu. Thông tin bằng tiếng Việt chính xác, liên quan mật thiết đến từ khóa được cấp.`,
           responseMimeType: 'application/json',
           responseSchema: {
             type: Type.OBJECT,
@@ -285,12 +313,20 @@ Trả về kết quả dưới dạng JSON chuẩn.`;
       const parsedData = JSON.parse(jsonText);
 
       if (parsedData.articles && Array.isArray(parsedData.articles) && parsedData.articles.length > 0) {
+        // Guarantee scannedQuery is present on all returned articles
+        const taggedArticles = parsedData.articles.map((art: any, idx: number) => ({
+          ...art,
+          id: art.id || `ai-scan-${Date.now()}-${idx}`,
+          scannedQuery: trimmedQuery,
+          url: art.url || (isUrl ? trimmedQuery : `https://baogialai.com.vn/search?q=${encodeURIComponent(trimmedQuery)}`)
+        }));
+
         res.json({
           success: true,
-          query,
+          query: trimmedQuery,
           isUrl,
-          articles: parsedData.articles,
-          aiSummaryOverview: parsedData.aiSummaryOverview || `Kết quả quét tự động cho từ khóa: "${query}".`,
+          articles: taggedArticles,
+          aiSummaryOverview: parsedData.aiSummaryOverview || `Kết quả quét tự động cho từ khóa/liên kết: "${trimmedQuery}".`,
           suggestedTopics: parsedData.suggestedTopics || [],
         });
         return;
@@ -300,14 +336,14 @@ Trả về kết quả dưới dạng JSON chuẩn.`;
     }
 
     // Fallback crawler if Gemini is unconfigured or errors
-    const fallbackArticles = generateFallbackArticlesForQuery(query);
+    const fallbackArticles = generateFallbackArticlesForQuery(trimmedQuery);
     res.json({
       success: true,
-      query,
+      query: trimmedQuery,
       isUrl,
       articles: fallbackArticles,
-      aiSummaryOverview: `Đã hoàn tất truy quét và thu thập 6 tin tức mới nhất về chủ đề "${query}" từ báo chí và mạng xã hội.`,
-      suggestedTopics: [query, 'Cập nhật tin tức 2026', 'Tây Nguyên & Gia Lai'],
+      aiSummaryOverview: `Đã hoàn tất truy quét và thu thập 6 tin tức mới nhất về chủ đề "${trimmedQuery}" từ báo chí và mạng xã hội.`,
+      suggestedTopics: [trimmedQuery, 'Cập nhật tin tức 2026', 'Tây Nguyên & Gia Lai'],
     });
 
   } catch (error: any) {

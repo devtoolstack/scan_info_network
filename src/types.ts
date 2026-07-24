@@ -32,6 +32,7 @@ export interface ArticleItem {
   alertMessage?: string;
   author?: string;
   topicTag: string;
+  scannedQuery?: string;
 }
 
 export interface SearchFilterState {
