@@ -22,11 +22,9 @@ export function getArticleExternalUrl(article: {
     return scannedQuery;
   }
 
-  // 2. If article has a valid real news URL from mockFeed or real source (and NOT a fake generated post ID)
+  // 2. If article has a valid real news URL (direct article link from Gemini grounding or real source)
   if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
     if (
-      !rawUrl.includes('google.com/search') &&
-      !rawUrl.includes('google.com/url') &&
       !rawUrl.includes('post29410') &&
       !rawUrl.includes('20260724101522') &&
       !rawUrl.includes('20260724120011') &&
@@ -36,32 +34,34 @@ export function getArticleExternalUrl(article: {
     }
   }
 
-  // 3. For scanned queries or generated items: construct clean, direct search URLs on official portals
-  // This guarantees that clicking the link opens live results with ACTUAL relevant articles for the searched keyword!
-  const queryTerm = scannedQuery || article.title.replace(/^\[.*?\]\s*/, '').replace(/^(Báo Gia Lai|VTV News|Báo Tuổi Trẻ|Facebook Trending|Reuters)\s*:\s*/i, '');
-  const cleanTerm = queryTerm.trim();
-  const encTerm = encodeURIComponent(cleanTerm);
+  // 3. Clean title to search for the specific article headline
+  const cleanTitle = (article.title || '')
+    .replace(/^\[.*?\]\s*/, '')
+    .replace(/^(Báo Gia Lai|VTV News|Báo Tuổi Trẻ|Facebook Trending|Reuters|VnExpress)\s*:\s*/i, '')
+    .trim();
+
+  const encTitle = encodeURIComponent(cleanTitle || scannedQuery || 'Tin tuc Gia Lai');
   const sourceName = (article.sourceName || '').toLowerCase();
   const sourceCategory = article.sourceCategory || '';
 
   if (sourceName.includes('gia lai') || sourceCategory === 'local_news') {
-    return `https://www.google.com/search?q=site:baogialai.com.vn+${encTerm}`;
+    return `https://www.google.com/search?q=site:baogialai.com.vn+${encTitle}`;
   }
   if (sourceName.includes('vtv')) {
-    return `https://vtv.vn/tim-kiem.htm?keywords=${encTerm}`;
+    return `https://vtv.vn/tim-kiem.htm?keywords=${encTitle}`;
   }
   if (sourceName.includes('tuổi trẻ') || sourceName.includes('tuoitre')) {
-    return `https://tuoitre.vn/tim-kiem.htm?keywords=${encTerm}`;
+    return `https://tuoitre.vn/tim-kiem.htm?keywords=${encTitle}`;
   }
   if (sourceName.includes('vnexpress')) {
-    return `https://vnexpress.net/tim-kiem?q=${encTerm}`;
+    return `https://vnexpress.net/tim-kiem?q=${encTitle}`;
   }
   if (sourceCategory === 'social_media' || sourceName.includes('facebook')) {
-    return `https://www.facebook.com/search/posts?q=${encTerm}`;
+    return `https://www.facebook.com/search/posts?q=${encTitle}`;
   }
   if (sourceCategory === 'international' || sourceName.includes('reuters')) {
-    return `https://www.reuters.com/site-search/?query=${encTerm}`;
+    return `https://www.reuters.com/site-search/?query=${encTitle}`;
   }
 
-  return `https://news.google.com/search?q=${encTerm}&hl=vi-VN&gl=VN&ceid=VN:vi`;
+  return `https://www.google.com/search?q=${encTitle}`;
 }

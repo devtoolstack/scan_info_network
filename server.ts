@@ -454,7 +454,10 @@ Yêu cầu QUAN TRỌNG:
         model: 'gemini-3.6-flash',
         contents: prompt,
         config: {
-          systemInstruction: `Bạn là hệ thống AI lõi của Scan Info Network. Hãy luôn trả về đúng cấu trúc JSON phù hợp schema yêu cầu. Thông tin bằng tiếng Việt chính xác, liên quan mật thiết đến từ khóa được cấp.`,
+          systemInstruction: `Bạn là hệ thống AI lõi của Scan Info Network. Hãy quét và thu thập thông tin THỰC TẾ đã xuất bản trên báo chí (Báo Gia Lai, VTV, Tuổi Trẻ, VnExpress, SGGP, Reuters...) và mạng xã hội. 
+BẮT BUỘC sử dụng công cụ tìm kiếm thực tế để lấy đúng tiêu đề thực tế (headline) của bài viết đã xuất bản và đường dẫn nguồn chính xác.
+Không tự nghĩ ra tiêu đề chung chung không có thật. Trả về đúng cấu trúc JSON phù hợp schema.`,
+          tools: [{ googleSearch: {} }],
           responseMimeType: 'application/json',
           responseSchema: {
             type: Type.OBJECT,
@@ -530,14 +533,28 @@ Yêu cầu QUAN TRỌNG:
       const jsonText = response.text || '{}';
       const parsedData = JSON.parse(jsonText);
 
+      // Extract grounded web links if available from Gemini Google Search tool
+      const groundingChunks = (response as any).candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+      const groundedWebLinks = groundingChunks
+        .map((c: any) => c.web)
+        .filter((w: any) => w && w.uri && w.title);
+
       if (parsedData.articles && Array.isArray(parsedData.articles) && parsedData.articles.length > 0) {
         // Guarantee scannedQuery and valid, accessible URLs are present on all returned articles
-        const taggedArticles = parsedData.articles.map((art: any, idx: number) => ({
-          ...art,
-          id: art.id || `ai-scan-${Date.now()}-${idx}`,
-          scannedQuery: trimmedQuery,
-          url: sanitizeArticleUrl(art.url, trimmedQuery, art.sourceCategory, art.sourceName, isUrl, trimmedQuery, art.title)
-        }));
+        const taggedArticles = parsedData.articles.map((art: any, idx: number) => {
+          // If we have a grounded real web link for this index, use its title and real URI
+          const matchedGroundedLink = groundedWebLinks[idx];
+          const finalTitle = matchedGroundedLink?.title || art.title;
+          const rawUrl = matchedGroundedLink?.uri || art.url;
+
+          return {
+            ...art,
+            id: art.id || `ai-scan-${Date.now()}-${idx}`,
+            title: finalTitle,
+            scannedQuery: trimmedQuery,
+            url: sanitizeArticleUrl(rawUrl, trimmedQuery, art.sourceCategory, art.sourceName, isUrl, trimmedQuery, finalTitle)
+          };
+        });
 
         res.json({
           success: true,
