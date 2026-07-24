@@ -45,51 +45,59 @@ function slugify(text: string): string {
     .replace(/-+/g, '-');
 }
 
-function buildDirectArticleUrl(title: string, sourceCategory: string, sourceName: string, isUrlInput: boolean = false, inputUrl: string = '', seedId: number = 294101): string {
+function buildDirectArticleUrl(title: string, sourceCategory: string, sourceName: string, isUrlInput: boolean = false, inputUrl: string = ''): string {
   if (isUrlInput && inputUrl && (inputUrl.startsWith('http://') || inputUrl.startsWith('https://'))) {
     return inputUrl;
   }
 
-  const cleanTitle = (title || 'Tin tuc Gia Lai').replace(/^\[.*?\]\s*/, '');
-  const slug = slugify(cleanTitle);
+  const cleanTitle = (title || 'Tin tuc Gia Lai')
+    .replace(/^\[.*?\]\s*/, '')
+    .replace(/^(Báo Gia Lai|VTV News|Báo Tuổi Trẻ|Facebook Trending|Reuters)\s*:\s*/i, '')
+    .trim();
+  const encTerm = encodeURIComponent(cleanTitle);
   const nameLower = (sourceName || '').toLowerCase();
 
   if (nameLower.includes('gia lai') || sourceCategory === 'local_news') {
-    return `https://baogialai.com.vn/${slug}-post${seedId}.html`;
+    return `https://www.google.com/search?q=site:baogialai.com.vn+${encTerm}`;
   }
   if (nameLower.includes('vtv')) {
-    return `https://vtv.vn/cong-nghe/${slug}-${seedId}.htm`;
+    return `https://vtv.vn/tim-kiem.htm?keywords=${encTerm}`;
   }
   if (nameLower.includes('tuổi trẻ') || nameLower.includes('tuoitre')) {
-    return `https://tuoitre.vn/${slug}-${seedId}.htm`;
+    return `https://tuoitre.vn/tim-kiem.htm?keywords=${encTerm}`;
   }
   if (nameLower.includes('vnexpress')) {
-    return `https://vnexpress.net/${slug}-${seedId}.html`;
+    return `https://vnexpress.net/tim-kiem?q=${encTerm}`;
   }
   if (nameLower.includes('sggp')) {
-    return `https://sggp.org.vn/${slug}-${seedId}.html`;
+    return `https://www.google.com/search?q=site:sggp.org.vn+${encTerm}`;
   }
   if (nameLower.includes('nhân dân') || nameLower.includes('nhandan')) {
-    return `https://nhandan.vn/${slug}-${seedId}.html`;
+    return `https://nhandan.vn/tim-kiem?q=${encTerm}`;
   }
   if (sourceCategory === 'social_media' || nameLower.includes('facebook')) {
-    return `https://www.facebook.com/groups/gialai.online/posts/${seedId}/`;
+    return `https://www.facebook.com/search/posts?q=${encTerm}`;
   }
   if (sourceCategory === 'international' || nameLower.includes('reuters')) {
-    return `https://www.reuters.com/technology/${slug}/`;
+    return `https://www.reuters.com/site-search/?query=${encTerm}`;
   }
 
-  return `https://baogialai.com.vn/${slug}-post${seedId}.html`;
+  return `https://news.google.com/search?q=${encTerm}&hl=vi-VN&gl=VN&ceid=VN:vi`;
 }
 
 function sanitizeArticleUrl(rawUrl: string, term: string, sourceCategory: string, sourceName: string, isUrlInput: boolean = false, inputUrl: string = '', articleTitle?: string): string {
   if (isUrlInput && inputUrl && (rawUrl === inputUrl || rawUrl.includes(inputUrl))) {
     return inputUrl;
   }
-  if (rawUrl && typeof rawUrl === 'string' && (rawUrl.startsWith('http://') || rawUrl.startsWith('https://'))) {
-    if (!rawUrl.includes('google.com/search') && !rawUrl.includes('google.com/url')) {
-      return rawUrl;
-    }
+  if (
+    rawUrl &&
+    typeof rawUrl === 'string' &&
+    (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) &&
+    !rawUrl.includes('google.com/search') &&
+    !rawUrl.includes('google.com/url') &&
+    !rawUrl.includes('post29410')
+  ) {
+    return rawUrl;
   }
   return buildDirectArticleUrl(articleTitle || term, sourceCategory, sourceName, isUrlInput, inputUrl);
 }
@@ -122,7 +130,7 @@ function generateFallbackArticlesForQuery(query: string) {
       {
         id: `crawl-${Date.now()}-1`,
         title: `Chuỗi sự kiện Năm Lượng tử Gia Lai 2026`,
-        url: `https://baogialai.com.vn/chuoi-su-kien-nam-luong-tu-gia-lai-2026-post294101.html`,
+        url: `https://www.google.com/search?q=site:baogialai.com.vn+N%C4%83m+l%C6%B0%E1%BB%A3ng+t%E1%BB%AD+Gia+Lai+2026`,
         scannedQuery: query.trim(),
         sourceName: 'Báo Gia Lai điện tử',
         sourceCategory: 'local_news' as const,
@@ -144,7 +152,7 @@ function generateFallbackArticlesForQuery(query: string) {
       {
         id: `crawl-${Date.now()}-2`,
         title: `Những diễn giả nổi bật tại lễ khai mạc Năm Lượng tử Gia Lai 2026`,
-        url: `https://baogialai.com.vn/nhung-dien-gia-noi-bat-tai-le-khai-mac-nam-luong-tu-gia-lai-2026-post294102.html`,
+        url: `https://www.google.com/search?q=site:baogialai.com.vn+N%C4%83m+l%C6%B0%E1%BB%A3ng+t%E1%BB%AD+Gia+Lai+2026`,
         scannedQuery: query.trim(),
         sourceName: 'Báo Gia Lai điện tử',
         sourceCategory: 'local_news' as const,
@@ -166,7 +174,7 @@ function generateFallbackArticlesForQuery(query: string) {
       {
         id: `crawl-${Date.now()}-3`,
         title: `Cuộc thi Hackathon quốc tế về Tính toán lượng tử tại Gia Lai`,
-        url: `https://baogialai.com.vn/cuoc-thi-hackathon-quoc-te-ve-tinh-toan-luong-tu-tai-gia-lai-post294103.html`,
+        url: `https://www.google.com/search?q=site:baogialai.com.vn+N%C4%83m+l%C6%B0%E1%BB%A3ng+t%E1%BB%AD+Gia+Lai+2026`,
         scannedQuery: query.trim(),
         sourceName: 'Báo Gia Lai điện tử',
         sourceCategory: 'local_news' as const,
@@ -188,7 +196,7 @@ function generateFallbackArticlesForQuery(query: string) {
       {
         id: `crawl-${Date.now()}-4`,
         title: `VTV News: Toàn cảnh xu hướng công nghệ và truyền thông về Năm Lượng tử Gia Lai 2026`,
-        url: `https://vtv.vn/cong-nghe/toan-canh-xu-huong-cong-nghe-va-truyen-thong-nam-luong-tu-gia-lai-2026-20260724101522.htm`,
+        url: `https://vtv.vn/tim-kiem.htm?keywords=N%C4%83m%20L%C6%B0%E1%BB%A3ng%20t%E1%BB%AD%20Gia%20Lai%202026`,
         scannedQuery: query.trim(),
         sourceName: 'VTV News',
         sourceCategory: 'central_news' as const,
@@ -210,7 +218,7 @@ function generateFallbackArticlesForQuery(query: string) {
       {
         id: `crawl-${Date.now()}-5`,
         title: `Báo Tuổi Trẻ: Đóng góp của hạt nhân khoa học trong Năm Lượng tử Gia Lai 2026`,
-        url: `https://tuoitre.vn/dong-gop-cua-hat-nhan-khoa-hoc-trong-nam-luong-tu-gia-lai-2026-20260724120011.htm`,
+        url: `https://tuoitre.vn/tim-kiem.htm?keywords=N%C4%83m%20L%C6%B0%E1%BB%A3ng%20t%E1%BB%AD%20Gia%20Lai%202026`,
         scannedQuery: query.trim(),
         sourceName: 'Báo Tuổi Trẻ',
         sourceCategory: 'central_news' as const,
@@ -232,7 +240,7 @@ function generateFallbackArticlesForQuery(query: string) {
       {
         id: `crawl-${Date.now()}-6`,
         title: `Cảnh báo nhiễu: Xuất hiện trang tin mạo danh ăn theo Năm Lượng tử Gia Lai 2026`,
-        url: `https://www.facebook.com/groups/gialai.online/posts/88214299102/`,
+        url: `https://www.facebook.com/search/posts?q=C%E1%BA%A3nh%20b%C3%A1o%20m%E1%BA%A1o%20danh%20N%C4%83m%20L%C6%B0%E1%BB%A3ng%20t%E1%BB%AD%20Gia%20Lai`,
         scannedQuery: query.trim(),
         sourceName: 'Trang Cảnh báo An ninh mạng',
         sourceCategory: 'social_media' as const,
@@ -270,7 +278,7 @@ function generateFallbackArticlesForQuery(query: string) {
     {
       id: `crawl-${Date.now()}-1`,
       title: title1,
-      url: isUrl ? query.trim() : buildDirectArticleUrl(title1, 'local_news', 'Báo Gia Lai', false, '', 294101),
+      url: isUrl ? query.trim() : buildDirectArticleUrl(title1, 'local_news', 'Báo Gia Lai', false, ''),
       scannedQuery: query.trim(),
       sourceName: isUrl ? (sourceDomain || 'Báo điện tử') : 'Báo Gia Lai (Điện tử)',
       sourceCategory: 'local_news' as const,
@@ -294,7 +302,7 @@ function generateFallbackArticlesForQuery(query: string) {
     {
       id: `crawl-${Date.now()}-2`,
       title: title2,
-      url: buildDirectArticleUrl(title2, 'central_news', 'VTV News', false, '', 294102),
+      url: buildDirectArticleUrl(title2, 'central_news', 'VTV News', false, ''),
       scannedQuery: query.trim(),
       sourceName: 'VTV News',
       sourceCategory: 'central_news' as const,
@@ -316,7 +324,7 @@ function generateFallbackArticlesForQuery(query: string) {
     {
       id: `crawl-${Date.now()}-3`,
       title: title3,
-      url: buildDirectArticleUrl(title3, 'central_news', 'Báo Tuổi Trẻ', false, '', 294103),
+      url: buildDirectArticleUrl(title3, 'central_news', 'Báo Tuổi Trẻ', false, ''),
       scannedQuery: query.trim(),
       sourceName: 'Báo Tuổi Trẻ',
       sourceCategory: 'central_news' as const,
@@ -338,7 +346,7 @@ function generateFallbackArticlesForQuery(query: string) {
     {
       id: `crawl-${Date.now()}-4`,
       title: title4,
-      url: buildDirectArticleUrl(title4, 'social_media', 'Facebook', false, '', 294104),
+      url: buildDirectArticleUrl(title4, 'social_media', 'Facebook', false, ''),
       scannedQuery: query.trim(),
       sourceName: 'Facebook Group - Tin Tức Gia Lai 24h',
       sourceCategory: 'social_media' as const,
@@ -360,7 +368,7 @@ function generateFallbackArticlesForQuery(query: string) {
     {
       id: `crawl-${Date.now()}-5`,
       title: title5,
-      url: buildDirectArticleUrl(title5, 'international', 'Reuters', false, '', 294105),
+      url: buildDirectArticleUrl(title5, 'international', 'Reuters', false, ''),
       scannedQuery: query.trim(),
       sourceName: 'Reuters International',
       sourceCategory: 'international' as const,
@@ -382,7 +390,7 @@ function generateFallbackArticlesForQuery(query: string) {
     {
       id: `crawl-${Date.now()}-6`,
       title: title6,
-      url: buildDirectArticleUrl(title6, 'social_media', 'Cảnh báo An ninh mạng', false, '', 294106),
+      url: buildDirectArticleUrl(title6, 'social_media', 'Cảnh báo An ninh mạng', false, ''),
       scannedQuery: query.trim(),
       sourceName: 'Trang Cảnh báo An ninh mạng',
       sourceCategory: 'social_media' as const,

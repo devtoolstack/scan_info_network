@@ -1,66 +1,8 @@
 import { ArticleItem } from '../types';
 
-export function slugify(text: string): string {
-  if (!text) return 'tin-tuc-gia-lai';
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'd')
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
-}
-
-export function buildDirectArticleUrl(
-  title: string,
-  sourceName: string = '',
-  sourceCategory: string = '',
-  isUrlInput: boolean = false,
-  inputUrl: string = '',
-  seedId: number = 294101
-): string {
-  if (isUrlInput && inputUrl && (inputUrl.startsWith('http://') || inputUrl.startsWith('https://'))) {
-    return inputUrl;
-  }
-
-  const cleanTitle = (title || 'Tin tuc Gia Lai').replace(/^\[.*?\]\s*/, '');
-  const slug = slugify(cleanTitle);
-  const nameLower = (sourceName || '').toLowerCase();
-
-  if (nameLower.includes('gia lai') || sourceCategory === 'local_news') {
-    return `https://baogialai.com.vn/${slug}-post${seedId}.html`;
-  }
-  if (nameLower.includes('vtv')) {
-    return `https://vtv.vn/cong-nghe/${slug}-${seedId}.htm`;
-  }
-  if (nameLower.includes('tuổi trẻ') || nameLower.includes('tuoitre')) {
-    return `https://tuoitre.vn/${slug}-${seedId}.htm`;
-  }
-  if (nameLower.includes('vnexpress')) {
-    return `https://vnexpress.net/${slug}-${seedId}.html`;
-  }
-  if (nameLower.includes('sggp')) {
-    return `https://sggp.org.vn/${slug}-${seedId}.html`;
-  }
-  if (nameLower.includes('nhân dân') || nameLower.includes('nhandan')) {
-    return `https://nhandan.vn/${slug}-${seedId}.html`;
-  }
-  if (sourceCategory === 'social_media' || nameLower.includes('facebook')) {
-    return `https://www.facebook.com/groups/gialai.online/posts/${seedId}/`;
-  }
-  if (sourceCategory === 'international' || nameLower.includes('reuters')) {
-    return `https://www.reuters.com/technology/${slug}/`;
-  }
-
-  return `https://baogialai.com.vn/${slug}-post${seedId}.html`;
-}
-
 /**
- * Returns a direct, functional external URL for any article.
- * Guarantees that clicking the article link leads directly to the specific original article URL.
+ * Returns a clean, working external URL for any article.
+ * Prevents dead/fictional post IDs that cause news sites (like Báo Gia Lai) to load unrelated fallback articles.
  */
 export function getArticleExternalUrl(article: {
   title: string;
@@ -73,24 +15,53 @@ export function getArticleExternalUrl(article: {
 
   const rawUrl = (article.url || '').trim();
   const scannedQuery = (article.scannedQuery || '').trim();
+  const isUrlInput = scannedQuery.startsWith('http://') || scannedQuery.startsWith('https://');
 
-  // If user entered or pasted a direct URL that matches
-  if (scannedQuery && (scannedQuery.startsWith('http://') || scannedQuery.startsWith('https://'))) {
-    if (rawUrl === scannedQuery || rawUrl.includes(scannedQuery)) {
-      return scannedQuery;
-    }
+  // 1. If user entered a specific direct URL, use that exact URL
+  if (isUrlInput) {
+    return scannedQuery;
   }
 
-  // If rawUrl is a direct HTTP/HTTPS link and NOT a google search wrapper, return it directly!
+  // 2. If article has a valid real news URL from mockFeed or real source (and NOT a fake generated post ID)
   if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
-    if (!rawUrl.includes('google.com/search') && !rawUrl.includes('google.com/url')) {
+    if (
+      !rawUrl.includes('google.com/search') &&
+      !rawUrl.includes('google.com/url') &&
+      !rawUrl.includes('post29410') &&
+      !rawUrl.includes('20260724101522') &&
+      !rawUrl.includes('20260724120011') &&
+      !rawUrl.includes('88214299102')
+    ) {
       return rawUrl;
     }
   }
 
-  return buildDirectArticleUrl(
-    article.title,
-    article.sourceName || '',
-    article.sourceCategory || ''
-  );
+  // 3. For scanned queries or generated items: construct clean, direct search URLs on official portals
+  // This guarantees that clicking the link opens live results with ACTUAL relevant articles for the searched keyword!
+  const queryTerm = scannedQuery || article.title.replace(/^\[.*?\]\s*/, '').replace(/^(Báo Gia Lai|VTV News|Báo Tuổi Trẻ|Facebook Trending|Reuters)\s*:\s*/i, '');
+  const cleanTerm = queryTerm.trim();
+  const encTerm = encodeURIComponent(cleanTerm);
+  const sourceName = (article.sourceName || '').toLowerCase();
+  const sourceCategory = article.sourceCategory || '';
+
+  if (sourceName.includes('gia lai') || sourceCategory === 'local_news') {
+    return `https://www.google.com/search?q=site:baogialai.com.vn+${encTerm}`;
+  }
+  if (sourceName.includes('vtv')) {
+    return `https://vtv.vn/tim-kiem.htm?keywords=${encTerm}`;
+  }
+  if (sourceName.includes('tuổi trẻ') || sourceName.includes('tuoitre')) {
+    return `https://tuoitre.vn/tim-kiem.htm?keywords=${encTerm}`;
+  }
+  if (sourceName.includes('vnexpress')) {
+    return `https://vnexpress.net/tim-kiem?q=${encTerm}`;
+  }
+  if (sourceCategory === 'social_media' || sourceName.includes('facebook')) {
+    return `https://www.facebook.com/search/posts?q=${encTerm}`;
+  }
+  if (sourceCategory === 'international' || sourceName.includes('reuters')) {
+    return `https://www.reuters.com/site-search/?query=${encTerm}`;
+  }
+
+  return `https://news.google.com/search?q=${encTerm}&hl=vi-VN&gl=VN&ceid=VN:vi`;
 }

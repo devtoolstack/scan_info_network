@@ -187,7 +187,7 @@ export default function App() {
         {
           id: `scan-fb-${Date.now()}-1`,
           title: `Chuỗi sự kiện Năm Lượng tử Gia Lai 2026`,
-          url: `https://baogialai.com.vn/chuoi-su-kien-nam-luong-tu-gia-lai-2026-post294101.html`,
+          url: `https://www.google.com/search?q=site:baogialai.com.vn+N%C4%83m+l%C6%B0%E1%BB%A3ng+t%E1%BB%AD+Gia+Lai+2026`,
           scannedQuery: term,
           sourceName: 'Báo Gia Lai điện tử',
           sourceCategory: 'local_news',
@@ -209,7 +209,7 @@ export default function App() {
         {
           id: `scan-fb-${Date.now()}-2`,
           title: `Những diễn giả nổi bật tại lễ khai mạc Năm Lượng tử Gia Lai 2026`,
-          url: `https://baogialai.com.vn/nhung-dien-gia-noi-bat-tai-le-khai-mac-nam-luong-tu-gia-lai-2026-post294102.html`,
+          url: `https://www.google.com/search?q=site:baogialai.com.vn+N%C4%83m+l%C6%B0%E1%BB%A3ng+t%E1%BB%AD+Gia+Lai+2026`,
           scannedQuery: term,
           sourceName: 'Báo Gia Lai điện tử',
           sourceCategory: 'local_news',
@@ -231,7 +231,7 @@ export default function App() {
         {
           id: `scan-fb-${Date.now()}-3`,
           title: `Cuộc thi Hackathon quốc tế về Tính toán lượng tử tại Gia Lai`,
-          url: `https://baogialai.com.vn/cuoc-thi-hackathon-quoc-te-ve-tinh-toan-luong-tu-tai-gia-lai-post294103.html`,
+          url: `https://www.google.com/search?q=site:baogialai.com.vn+N%C4%83m+l%C6%B0%E1%BB%A3ng+t%E1%BB%AD+Gia+Lai+2026`,
           scannedQuery: term,
           sourceName: 'Báo Gia Lai điện tử',
           sourceCategory: 'local_news',
@@ -253,7 +253,7 @@ export default function App() {
         {
           id: `scan-fb-${Date.now()}-4`,
           title: `VTV News: Toàn cảnh xu hướng công nghệ và truyền thông về Năm Lượng tử Gia Lai 2026`,
-          url: `https://vtv.vn/cong-nghe/toan-canh-xu-huong-cong-nghe-va-truyen-thong-nam-luong-tu-gia-lai-2026-20260724101522.htm`,
+          url: `https://vtv.vn/tim-kiem.htm?keywords=N%C4%83m%20L%C6%B0%E1%BB%A3ng%20t%E1%BB%AD%20Gia%20Lai%202026`,
           scannedQuery: term,
           sourceName: 'VTV News',
           sourceCategory: 'central_news',
@@ -275,7 +275,7 @@ export default function App() {
         {
           id: `scan-fb-${Date.now()}-5`,
           title: `Báo Tuổi Trẻ: Đóng góp của hạt nhân khoa học trong Năm Lượng tử Gia Lai 2026`,
-          url: `https://tuoitre.vn/dong-gop-cua-hat-nhan-khoa-hoc-trong-nam-luong-tu-gia-lai-2026-20260724120011.htm`,
+          url: `https://tuoitre.vn/tim-kiem.htm?keywords=N%C4%83m%20L%C6%B0%E1%BB%A3ng%20t%E1%BB%AD%20Gia%20Lai%202026`,
           scannedQuery: term,
           sourceName: 'Báo Tuổi Trẻ',
           sourceCategory: 'central_news',
@@ -297,7 +297,7 @@ export default function App() {
         {
           id: `scan-fb-${Date.now()}-6`,
           title: `Cảnh báo nhiễu: Xuất hiện trang tin mạo danh ăn theo Năm Lượng tử Gia Lai 2026`,
-          url: `https://www.facebook.com/groups/gialai.online/posts/88214299102/`,
+          url: `https://www.facebook.com/search/posts?q=C%E1%BA%A3nh%20b%C3%A1o%20m%E1%BA%A1o%20danh%20N%C4%83m%20L%C6%B0%E1%BB%A3ng%20t%E1%BB%AD%20Gia%20Lai`,
           scannedQuery: term,
           sourceName: 'Trang Cảnh báo An ninh mạng',
           sourceCategory: 'social_media',
