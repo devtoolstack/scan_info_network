@@ -1,0 +1,6 @@
+{
+  "name": "Scan Info Network",
+  "description": "Hệ thống giám sát, thu thập thông tin tự động trên Internet & Mạng xã hội tích hợp AI phân tích ngữ nghĩa, lọc nhiễu và cảnh báo thời gian thực.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
