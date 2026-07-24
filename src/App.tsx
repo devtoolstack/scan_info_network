@@ -88,12 +88,25 @@ export default function App() {
 
       // Query filter if entered
       if (filters.query.trim()) {
-        const q = filters.query.toLowerCase();
-        const matchesTitle = art.title.toLowerCase().includes(q);
-        const matchesSummary = art.summary.toLowerCase().includes(q);
-        const matchesSource = art.sourceName.toLowerCase().includes(q);
-        const matchesTopic = art.topicTag ? art.topicTag.toLowerCase().includes(q) : false;
-        if (!matchesTitle && !matchesSummary && !matchesSource && !matchesTopic) {
+        const rawQ = filters.query.toLowerCase().trim();
+        const searchWords = rawQ.split(/\s+/).filter((w) => w.length > 0);
+
+        const combinedText = (
+          art.title + ' ' + 
+          art.summary + ' ' + 
+          art.sourceName + ' ' + 
+          (art.topicTag || '') + ' ' + 
+          (art.contentSnippet || '') + ' ' +
+          (art.entities ? art.entities.map(e => e.name).join(' ') : '')
+        ).toLowerCase();
+
+        // Match if text contains full query string OR if all search words are present OR majority of words match
+        const matchesFull = combinedText.includes(rawQ);
+        const matchesAllWords = searchWords.length > 0 && searchWords.every((word) => combinedText.includes(word));
+        const matchedWordsCount = searchWords.filter((w) => combinedText.includes(w)).length;
+        const matchesMajorityWords = searchWords.length >= 3 && matchedWordsCount >= Math.ceil(searchWords.length * 0.6);
+
+        if (!matchesFull && !matchesAllWords && !matchesMajorityWords) {
           return false;
         }
       }
@@ -102,14 +115,14 @@ export default function App() {
     });
   }, [articles, filters]);
 
-  // Compute Sentiment Stats
+  // Compute Sentiment Stats strictly based on the active filtered/searched articles
   const stats: SentimentStats = useMemo(() => {
-    const total = articles.length;
-    const positive = articles.filter((a) => a.sentiment === 'positive').length;
-    const neutral = articles.filter((a) => a.sentiment === 'neutral').length;
-    const negative = articles.filter((a) => a.sentiment === 'negative').length;
-    const filteredNoiseCount = articles.filter((a) => a.isNoise).length;
-    const highRiskCount = articles.filter((a) => a.riskScore && a.riskScore > 60).length;
+    const total = filteredArticles.length;
+    const positive = filteredArticles.filter((a) => a.sentiment === 'positive').length;
+    const neutral = filteredArticles.filter((a) => a.sentiment === 'neutral').length;
+    const negative = filteredArticles.filter((a) => a.sentiment === 'negative').length;
+    const filteredNoiseCount = filteredArticles.filter((a) => a.isNoise).length;
+    const highRiskCount = filteredArticles.filter((a) => a.riskScore && a.riskScore > 60).length;
 
     return {
       total,
@@ -119,13 +132,16 @@ export default function App() {
       filteredNoiseCount,
       highRiskCount,
     };
-  }, [articles]);
+  }, [filteredArticles]);
 
   // Trigger AI Scan via Express API
   const handleExecuteScan = async (searchQuery: string) => {
     if (!searchQuery.trim()) return;
 
     setIsScanning(true);
+    // Set active filter query to searchQuery so user sees results
+    setFilters((prev) => ({ ...prev, query: searchQuery }));
+
     try {
       const res = await fetch('/api/scan', {
         method: 'POST',

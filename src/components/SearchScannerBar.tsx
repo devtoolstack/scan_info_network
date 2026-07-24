@@ -21,6 +21,7 @@ interface SearchScannerBarProps {
 }
 
 const PRESET_KEYWORDS = [
+  'Năm lượng tử Gia Lai 2026',
   'Cao tốc Quy Nhơn Pleiku',
   'Giá cà phê Gia Lai',
   'Chuyển đổi số báo chí',
