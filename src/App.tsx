@@ -178,6 +178,28 @@ export default function App() {
     const isUrl = query.trim().startsWith('http://') || query.trim().startsWith('https://');
     const term = query.trim();
     const ts = new Date().toISOString();
+    const enc = encodeURIComponent(term);
+
+    const getValidUrl = (sourceCat: string, sourceName: string) => {
+      if (isUrl) return term;
+      const nameLower = sourceName.toLowerCase();
+      if (nameLower.includes('gia lai') || sourceCat === 'local_news') {
+        return `https://www.google.com/search?q=site:baogialai.com.vn+${enc}`;
+      }
+      if (nameLower.includes('vtv')) {
+        return `https://vtv.vn/tim-kiem.htm?keywords=${enc}`;
+      }
+      if (nameLower.includes('tuổi trẻ') || nameLower.includes('tuoitre')) {
+        return `https://tuoitre.vn/tim-kiem.htm?keywords=${enc}`;
+      }
+      if (sourceCat === 'social_media' || nameLower.includes('facebook')) {
+        return `https://www.facebook.com/search/posts?q=${enc}`;
+      }
+      if (sourceCat === 'international' || nameLower.includes('reuters')) {
+        return `https://www.reuters.com/site-search/?query=${enc}`;
+      }
+      return `https://news.google.com/search?q=${enc}&hl=vi-VN&gl=VN&ceid=VN:vi`;
+    };
 
     return [
       {
@@ -185,7 +207,7 @@ export default function App() {
         title: isUrl 
           ? `[Phân tích Link Gốc] Bài viết trực tuyến: ${term}`
           : `Báo Gia Lai: Triển khai chương trình và chuỗi sự kiện trọng điểm về ${term}`,
-        url: isUrl ? term : `https://baogialai.com.vn/tin-tuc-${encodeURIComponent(term).slice(0, 30)}.html`,
+        url: getValidUrl('local_news', 'Báo Gia Lai'),
         scannedQuery: term,
         sourceName: 'Báo Gia Lai (Điện tử)',
         sourceCategory: 'local_news',
@@ -207,7 +229,7 @@ export default function App() {
       {
         id: `scan-fb-${Date.now()}-2`,
         title: `VTV News: Toàn cảnh xu hướng phát triển và dư luận báo chí về ${term}`,
-        url: `https://vtv.vn/cong-nghe/tin-tuc-${encodeURIComponent(term).slice(0, 30)}.htm`,
+        url: getValidUrl('central_news', 'VTV News'),
         scannedQuery: term,
         sourceName: 'VTV News',
         sourceCategory: 'central_news',
@@ -229,7 +251,7 @@ export default function App() {
       {
         id: `scan-fb-${Date.now()}-3`,
         title: `Báo Tuổi Trẻ: Đánh giá tác động xã hội và định hướng thông tin từ ${term}`,
-        url: `https://tuoitre.vn/danh-gia-tac-dong-${encodeURIComponent(term).slice(0, 30)}.htm`,
+        url: getValidUrl('central_news', 'Báo Tuổi Trẻ'),
         scannedQuery: term,
         sourceName: 'Báo Tuổi Trẻ',
         sourceCategory: 'central_news',
@@ -251,7 +273,7 @@ export default function App() {
       {
         id: `scan-fb-${Date.now()}-4`,
         title: `Facebook Trending: Cư dân mạng thảo luận sôi nổi về bài viết / từ khóa ${term}`,
-        url: `https://facebook.com/groups/gialai.online/posts/${Date.now()}/`,
+        url: getValidUrl('social_media', 'Facebook'),
         scannedQuery: term,
         sourceName: 'Facebook Group - Tin Tức Gia Lai 24h',
         sourceCategory: 'social_media',
@@ -273,7 +295,7 @@ export default function App() {
       {
         id: `scan-fb-${Date.now()}-5`,
         title: `Reuters / TechAsia: Foreign coverage and media outlook on ${term}`,
-        url: `https://reuters.com/technology/vietnam-gia-lai-${encodeURIComponent(term).slice(0, 30)}/`,
+        url: getValidUrl('international', 'Reuters'),
         scannedQuery: term,
         sourceName: 'Reuters International',
         sourceCategory: 'international',
@@ -295,7 +317,7 @@ export default function App() {
       {
         id: `scan-fb-${Date.now()}-6`,
         title: `Cảnh báo nhiễu: Xuất hiện thông tin chưa kiểm chứng ăn theo chủ đề ${term}`,
-        url: `https://facebook.com/canhbaoluadao/posts/${Date.now()}/`,
+        url: getValidUrl('social_media', 'Cảnh báo An ninh mạng'),
         scannedQuery: term,
         sourceName: 'Trang Cảnh báo An ninh mạng',
         sourceCategory: 'social_media',

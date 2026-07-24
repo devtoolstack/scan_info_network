@@ -31,6 +31,54 @@ function getGeminiClient() {
   });
 }
 
+// Helper to generate clean, valid, accessible URLs for crawled articles
+function buildValidSearchUrl(term: string, sourceCategory: string, sourceName: string, isUrlInput: boolean = false, inputUrl: string = ''): string {
+  if (isUrlInput && inputUrl) {
+    try {
+      const u = new URL(inputUrl);
+      return u.href;
+    } catch {
+      // fall through
+    }
+  }
+
+  const cleanTerm = term.trim();
+  const enc = encodeURIComponent(cleanTerm);
+  const nameLower = (sourceName || '').toLowerCase();
+
+  if (nameLower.includes('gia lai') || sourceCategory === 'local_news') {
+    return `https://www.google.com/search?q=site:baogialai.com.vn+${enc}`;
+  }
+  if (nameLower.includes('vtv')) {
+    return `https://vtv.vn/tim-kiem.htm?keywords=${enc}`;
+  }
+  if (nameLower.includes('tuổi trẻ') || nameLower.includes('tuoitre')) {
+    return `https://tuoitre.vn/tim-kiem.htm?keywords=${enc}`;
+  }
+  if (sourceCategory === 'social_media' || nameLower.includes('facebook')) {
+    return `https://www.facebook.com/search/posts?q=${enc}`;
+  }
+  if (sourceCategory === 'international' || nameLower.includes('reuters')) {
+    return `https://www.reuters.com/site-search/?query=${enc}`;
+  }
+  return `https://news.google.com/search?q=${enc}&hl=vi-VN&gl=VN&ceid=VN:vi`;
+}
+
+function sanitizeArticleUrl(rawUrl: string, term: string, sourceCategory: string, sourceName: string, isUrlInput: boolean = false, inputUrl: string = ''): string {
+  if (isUrlInput && inputUrl && (rawUrl === inputUrl || rawUrl.includes(inputUrl))) {
+    return inputUrl;
+  }
+  if (rawUrl && typeof rawUrl === 'string' && (rawUrl.startsWith('http://') || rawUrl.startsWith('https://'))) {
+    try {
+      const parsed = new URL(rawUrl);
+      return parsed.href;
+    } catch {
+      return buildValidSearchUrl(term, sourceCategory, sourceName, isUrlInput, inputUrl);
+    }
+  }
+  return buildValidSearchUrl(term, sourceCategory, sourceName, isUrlInput, inputUrl);
+}
+
 // Helper to generate realistic scanned articles if Gemini API is missing or encounters network errors
 function generateFallbackArticlesForQuery(query: string) {
   const isUrl = query.trim().startsWith('http://') || query.trim().startsWith('https://');
@@ -58,7 +106,7 @@ function generateFallbackArticlesForQuery(query: string) {
       title: isUrl 
         ? `[Phân tích Link Gốc] Bài viết trên ${sourceDomain || 'Trang báo'}: ${cleanTerm}`
         : `Báo Gia Lai: Triển khai chương trình và chuỗi sự kiện trọng điểm về ${cleanTerm}`,
-      url: isUrl ? query.trim() : `https://baogialai.com.vn/tin-tuc-${encodeURIComponent(cleanTerm).slice(0, 30)}.html`,
+      url: isUrl ? query.trim() : buildValidSearchUrl(cleanTerm, 'local_news', 'Báo Gia Lai'),
       scannedQuery: query.trim(),
       sourceName: isUrl ? (sourceDomain || 'Báo điện tử') : 'Báo Gia Lai (Điện tử)',
       sourceCategory: 'local_news' as const,
@@ -84,7 +132,7 @@ function generateFallbackArticlesForQuery(query: string) {
       title: isUrl 
         ? `VTV News: Bình luận và tổng hợp dư luận truyền thông xung quanh đường dẫn ${sourceDomain}`
         : `VTV News: Toàn cảnh xu hướng phát triển và tầm nhìn chiến lược về ${cleanTerm}`,
-      url: `https://vtv.vn/cong-nghe/tin-tuc-toan-canh-${encodeURIComponent(cleanTerm).slice(0, 30)}.htm`,
+      url: buildValidSearchUrl(cleanTerm, 'central_news', 'VTV News'),
       scannedQuery: query.trim(),
       sourceName: 'VTV News',
       sourceCategory: 'central_news' as const,
@@ -106,7 +154,7 @@ function generateFallbackArticlesForQuery(query: string) {
     {
       id: `crawl-${Date.now()}-3`,
       title: `Báo Tuổi Trẻ: Đánh giá tác động xã hội và định hướng thông tin từ ${cleanTerm}`,
-      url: `https://tuoitre.vn/danh-gia-tac-dong-${encodeURIComponent(cleanTerm).slice(0, 30)}.htm`,
+      url: buildValidSearchUrl(cleanTerm, 'central_news', 'Báo Tuổi Trẻ'),
       scannedQuery: query.trim(),
       sourceName: 'Báo Tuổi Trẻ',
       sourceCategory: 'central_news' as const,
@@ -128,7 +176,7 @@ function generateFallbackArticlesForQuery(query: string) {
     {
       id: `crawl-${Date.now()}-4`,
       title: `Facebook Trending: Cư dân mạng thảo luận sôi nổi về bài viết / từ khóa ${cleanTerm}`,
-      url: `https://facebook.com/groups/gialai.online/posts/${Date.now()}/`,
+      url: buildValidSearchUrl(cleanTerm, 'social_media', 'Facebook'),
       scannedQuery: query.trim(),
       sourceName: 'Facebook Group - Tin Tức Gia Lai 24h',
       sourceCategory: 'social_media' as const,
@@ -150,7 +198,7 @@ function generateFallbackArticlesForQuery(query: string) {
     {
       id: `crawl-${Date.now()}-5`,
       title: `Reuters / TechAsia: Foreign coverage and media outlook on ${cleanTerm}`,
-      url: `https://reuters.com/technology/vietnam-gia-lai-${encodeURIComponent(cleanTerm).slice(0, 30)}/`,
+      url: buildValidSearchUrl(cleanTerm, 'international', 'Reuters'),
       scannedQuery: query.trim(),
       sourceName: 'Reuters International',
       sourceCategory: 'international' as const,
@@ -172,7 +220,7 @@ function generateFallbackArticlesForQuery(query: string) {
     {
       id: `crawl-${Date.now()}-6`,
       title: `Cảnh báo nhiễu: Xuất hiện thông tin chưa kiểm chứng ăn theo chủ đề ${cleanTerm}`,
-      url: `https://facebook.com/canhbaoluadao/posts/${Date.now()}/`,
+      url: buildValidSearchUrl(cleanTerm, 'social_media', 'Cảnh báo An ninh mạng'),
       scannedQuery: query.trim(),
       sourceName: 'Trang Cảnh báo An ninh mạng',
       sourceCategory: 'social_media' as const,
@@ -313,12 +361,12 @@ Yêu cầu QUAN TRỌNG:
       const parsedData = JSON.parse(jsonText);
 
       if (parsedData.articles && Array.isArray(parsedData.articles) && parsedData.articles.length > 0) {
-        // Guarantee scannedQuery is present on all returned articles
+        // Guarantee scannedQuery and valid, accessible URLs are present on all returned articles
         const taggedArticles = parsedData.articles.map((art: any, idx: number) => ({
           ...art,
           id: art.id || `ai-scan-${Date.now()}-${idx}`,
           scannedQuery: trimmedQuery,
-          url: art.url || (isUrl ? trimmedQuery : `https://baogialai.com.vn/search?q=${encodeURIComponent(trimmedQuery)}`)
+          url: sanitizeArticleUrl(art.url, trimmedQuery, art.sourceCategory, art.sourceName, isUrl, trimmedQuery)
         }));
 
         res.json({
