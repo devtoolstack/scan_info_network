@@ -16,6 +16,7 @@ import {
   Lightbulb
 } from 'lucide-react';
 import { ArticleItem } from '../types';
+import { getArticleExternalUrl } from '../utils/urlHelper';
 
 interface ArticleDetailModalProps {
   article: ArticleItem | null;
@@ -60,9 +61,10 @@ export const ArticleDetailModal: React.FC<ArticleDetailModalProps> = ({
   if (!article) return null;
 
   const handleCopyReport = () => {
+    const externalUrl = getArticleExternalUrl(article);
     const reportText = `[SCAN INFO NETWORK - AI REPORT]
 Tiêu đề: ${article.title}
-Nguồn: ${article.sourceName} (${article.url})
+Nguồn: ${article.sourceName} (${externalUrl})
 Sắc thái: ${article.sentiment.toUpperCase()} (${article.sentimentScore}%)
 Chỉ số rủi ro: ${article.riskScore || 10}/100
 Tóm tắt: ${article.summary}`;
@@ -108,7 +110,7 @@ Tóm tắt: ${article.summary}`;
                 {article.sourceName}
               </span>
               <a
-                href={article.url}
+                href={getArticleExternalUrl(article)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-cyan-600 hover:underline flex items-center gap-1 font-medium"

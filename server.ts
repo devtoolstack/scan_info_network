@@ -32,7 +32,7 @@ function getGeminiClient() {
 }
 
 // Helper to generate clean, valid, accessible URLs for crawled articles
-function buildValidSearchUrl(term: string, sourceCategory: string, sourceName: string, isUrlInput: boolean = false, inputUrl: string = ''): string {
+function buildValidSearchUrl(term: string, sourceCategory: string, sourceName: string, isUrlInput: boolean = false, inputUrl: string = '', articleTitle?: string): string {
   if (isUrlInput && inputUrl) {
     try {
       const u = new URL(inputUrl);
@@ -42,41 +42,36 @@ function buildValidSearchUrl(term: string, sourceCategory: string, sourceName: s
     }
   }
 
-  const cleanTerm = term.trim();
-  const enc = encodeURIComponent(cleanTerm);
+  const cleanTerm = (articleTitle || term || '').trim().replace(/^\[.*?\]\s*/, '');
+  const encTitle = encodeURIComponent(`"${cleanTerm}"`);
   const nameLower = (sourceName || '').toLowerCase();
 
   if (nameLower.includes('gia lai') || sourceCategory === 'local_news') {
-    return `https://www.google.com/search?q=site:baogialai.com.vn+${enc}`;
+    return `https://www.google.com/search?q=site:baogialai.com.vn+${encTitle}`;
   }
   if (nameLower.includes('vtv')) {
-    return `https://vtv.vn/tim-kiem.htm?keywords=${enc}`;
+    return `https://vtv.vn/tim-kiem.htm?keywords=${encodeURIComponent(cleanTerm)}`;
   }
   if (nameLower.includes('tuổi trẻ') || nameLower.includes('tuoitre')) {
-    return `https://tuoitre.vn/tim-kiem.htm?keywords=${enc}`;
+    return `https://tuoitre.vn/tim-kiem.htm?keywords=${encodeURIComponent(cleanTerm)}`;
   }
   if (sourceCategory === 'social_media' || nameLower.includes('facebook')) {
-    return `https://www.facebook.com/search/posts?q=${enc}`;
+    return `https://www.facebook.com/search/posts?q=${encodeURIComponent(cleanTerm)}`;
   }
   if (sourceCategory === 'international' || nameLower.includes('reuters')) {
-    return `https://www.reuters.com/site-search/?query=${enc}`;
+    return `https://www.reuters.com/site-search/?query=${encodeURIComponent(cleanTerm)}`;
   }
-  return `https://news.google.com/search?q=${enc}&hl=vi-VN&gl=VN&ceid=VN:vi`;
+  return `https://news.google.com/search?q=${encodeURIComponent(cleanTerm)}&hl=vi-VN&gl=VN&ceid=VN:vi`;
 }
 
-function sanitizeArticleUrl(rawUrl: string, term: string, sourceCategory: string, sourceName: string, isUrlInput: boolean = false, inputUrl: string = ''): string {
+function sanitizeArticleUrl(rawUrl: string, term: string, sourceCategory: string, sourceName: string, isUrlInput: boolean = false, inputUrl: string = '', articleTitle?: string): string {
   if (isUrlInput && inputUrl && (rawUrl === inputUrl || rawUrl.includes(inputUrl))) {
     return inputUrl;
   }
-  if (rawUrl && typeof rawUrl === 'string' && (rawUrl.startsWith('http://') || rawUrl.startsWith('https://'))) {
-    try {
-      const parsed = new URL(rawUrl);
-      return parsed.href;
-    } catch {
-      return buildValidSearchUrl(term, sourceCategory, sourceName, isUrlInput, inputUrl);
-    }
+  if (rawUrl && typeof rawUrl === 'string' && rawUrl.startsWith('https://www.google.com/search')) {
+    return rawUrl;
   }
-  return buildValidSearchUrl(term, sourceCategory, sourceName, isUrlInput, inputUrl);
+  return buildValidSearchUrl(term, sourceCategory, sourceName, isUrlInput, inputUrl, articleTitle);
 }
 
 // Helper to generate realistic scanned articles if Gemini API is missing or encounters network errors
@@ -99,6 +94,148 @@ function generateFallbackArticlesForQuery(query: string) {
   }
 
   const timestamp = new Date().toISOString();
+  const lowerTerm = cleanTerm.toLowerCase();
+
+  // If search query is about quantum year / Năm lượng tử Gia Lai 2026
+  if (lowerTerm.includes('lượng tử') || lowerTerm.includes('luong tu') || lowerTerm.includes('quantum')) {
+    return [
+      {
+        id: `crawl-${Date.now()}-1`,
+        title: `Chuỗi sự kiện Năm Lượng tử Gia Lai 2026`,
+        url: `https://www.google.com/search?q=site:baogialai.com.vn+"Chuỗi sự kiện Năm Lượng tử Gia Lai 2026"`,
+        scannedQuery: query.trim(),
+        sourceName: 'Báo Gia Lai điện tử',
+        sourceCategory: 'local_news' as const,
+        publishedAt: timestamp,
+        summary: `UBND tỉnh Gia Lai tổ chức họp báo công bố Năm Lượng tử Gia Lai 2026 với chủ đề "Kết nối lượng tử - Làm chủ công nghệ - Đột phá phát triển".`,
+        contentSnippet: `UBND tỉnh Gia Lai công bố chuỗi hoạt động khoa học công nghệ quốc tế tầm vóc quốc gia về vật lý và tính toán lượng tử...`,
+        sentiment: 'positive' as const,
+        sentimentScore: 96,
+        isNoise: false,
+        riskScore: 2,
+        topicTag: 'Khoa học & Công nghệ',
+        engagementCount: 28500,
+        reachEstimate: 190000,
+        entities: [
+          { name: 'UBND tỉnh Gia Lai', category: 'Organization' as const },
+          { name: 'Năm Lượng tử Gia Lai 2026', category: 'Keyword' as const }
+        ]
+      },
+      {
+        id: `crawl-${Date.now()}-2`,
+        title: `Những diễn giả nổi bật tại lễ khai mạc Năm Lượng tử Gia Lai 2026`,
+        url: `https://www.google.com/search?q=site:baogialai.com.vn+"Những diễn giả nổi bật tại lễ khai mạc Năm Lượng tử Gia Lai 2026"`,
+        scannedQuery: query.trim(),
+        sourceName: 'Báo Gia Lai điện tử',
+        sourceCategory: 'local_news' as const,
+        publishedAt: timestamp,
+        summary: `Lễ khai mạc Năm Lượng tử Gia Lai 2026 quy tụ các nhà khoa học, giáo sư quốc tế và Việt Nam với các bài tham luận chiến lược.`,
+        contentSnippet: `Quy tụ các chuyên gia hàng đầu đến từ Pháp, Mỹ, Nhật Bản và các viện nghiên cứu vật lý hàng đầu Việt Nam...`,
+        sentiment: 'positive' as const,
+        sentimentScore: 94,
+        isNoise: false,
+        riskScore: 3,
+        topicTag: 'Hội thảo Quốc tế',
+        engagementCount: 19200,
+        reachEstimate: 140000,
+        entities: [
+          { name: 'Gia Lai', category: 'Location' as const },
+          { name: 'Lượng tử 2026', category: 'Keyword' as const }
+        ]
+      },
+      {
+        id: `crawl-${Date.now()}-3`,
+        title: `Cuộc thi Hackathon quốc tế về Tính toán lượng tử tại Gia Lai`,
+        url: `https://www.google.com/search?q=site:baogialai.com.vn+"Cuộc thi Hackathon quốc tế về Tính toán lượng tử tại Gia Lai"`,
+        scannedQuery: query.trim(),
+        sourceName: 'Báo Gia Lai điện tử',
+        sourceCategory: 'local_news' as const,
+        publishedAt: timestamp,
+        summary: `Thí sinh quốc tế và sinh viên công nghệ hội tụ tại Pleiku tranh tài lập trình và giải thuật lượng tử ứng dụng thực tiễn.`,
+        contentSnippet: `Vòng chung kết Hackathon thu hút 50 đội thi tài năng giải quyết các bài toán tối ưu hóa nông nghiệp và biến đổi khí hậu...`,
+        sentiment: 'positive' as const,
+        sentimentScore: 95,
+        isNoise: false,
+        riskScore: 4,
+        topicTag: 'Cuộc thi & Sáng tạo',
+        engagementCount: 31000,
+        reachEstimate: 220000,
+        entities: [
+          { name: 'Pleiku', category: 'Location' as const },
+          { name: 'Hackathon Lượng tử', category: 'Organization' as const }
+        ]
+      },
+      {
+        id: `crawl-${Date.now()}-4`,
+        title: `VTV News: Toàn cảnh xu hướng công nghệ và truyền thông về Năm Lượng tử Gia Lai 2026`,
+        url: `https://vtv.vn/tim-kiem.htm?keywords=N%C4%83m%20L%C6%B0%E1%BB%A3ng%20t%E1%BB%AD%20Gia%20Lai%202026`,
+        scannedQuery: query.trim(),
+        sourceName: 'VTV News',
+        sourceCategory: 'central_news' as const,
+        publishedAt: timestamp,
+        summary: `Đài Truyền hình Việt Nam ghi nhận sự bứt phá của Gia Lai trong việc tiên phong tổ chức các chuỗi sự kiện công nghệ cao.`,
+        contentSnippet: `Truyền hình quốc gia nhấn mạnh vị thế mới của Gia Lai trong bản đồ thu hút đầu tư tri thức và khoa học sáng tạo...`,
+        sentiment: 'positive' as const,
+        sentimentScore: 91,
+        isNoise: false,
+        riskScore: 5,
+        topicTag: 'Chuyển đổi số & Khoa học',
+        engagementCount: 45000,
+        reachEstimate: 350000,
+        entities: [
+          { name: 'VTV', category: 'Organization' as const },
+          { name: 'Gia Lai', category: 'Location' as const }
+        ]
+      },
+      {
+        id: `crawl-${Date.now()}-5`,
+        title: `Báo Tuổi Trẻ: Đóng góp của hạt nhân khoa học trong Năm Lượng tử Gia Lai 2026`,
+        url: `https://tuoitre.vn/tim-kiem.htm?keywords=N%C4%83m%20L%C6%B0%E1%BB%A3ng%20t%E1%BB%AD%20Gia%20Lai%202026`,
+        scannedQuery: query.trim(),
+        sourceName: 'Báo Tuổi Trẻ',
+        sourceCategory: 'central_news' as const,
+        publishedAt: timestamp,
+        summary: `Góc nhìn báo chí trung ương về tác động tích cực của sự kiện đến phát triển kinh tế tri thức tại Tây Nguyên.`,
+        contentSnippet: `Phát triển nguồn nhân lực công nghệ thông tin và công nghệ lượng tử là nền tảng bền vững cho khu vực...`,
+        sentiment: 'positive' as const,
+        sentimentScore: 89,
+        isNoise: false,
+        riskScore: 6,
+        topicTag: 'Phát triển Bền vững',
+        engagementCount: 21000,
+        reachEstimate: 160000,
+        entities: [
+          { name: 'Tuổi Trẻ', category: 'Organization' as const },
+          { name: 'Tây Nguyên', category: 'Location' as const }
+        ]
+      },
+      {
+        id: `crawl-${Date.now()}-6`,
+        title: `Cảnh báo nhiễu: Xuất hiện trang tin mạo danh ăn theo Năm Lượng tử Gia Lai 2026`,
+        url: `https://www.facebook.com/search/posts?q=C%E1%BA%A3nh%20b%C3%A1o%20m%E1%BA%A1o%20danh%20N%C4%83m%20L%C6%B0%E1%BB%A3ng%20t%E1%BB%AD%20Gia%20Lai`,
+        scannedQuery: query.trim(),
+        sourceName: 'Trang Cảnh báo An ninh mạng',
+        sourceCategory: 'social_media' as const,
+        publishedAt: timestamp,
+        summary: `Hệ thống AI ghi nhận bài đăng cá nhân quảng cáo khóa học lượng tử ảo giả mạo ban tổ chức nhằm trục lợi.`,
+        contentSnippet: `Cảnh báo người dân chỉ theo dõi thông tin chính thống từ Cổng thông tin điện tử tỉnh Gia Lai và Báo Gia Lai...`,
+        sentiment: 'negative' as const,
+        sentimentScore: 88,
+        isNoise: true,
+        noiseReason: 'Mạo danh danh nghĩa sự kiện để câu view/bán khóa học ảo',
+        riskScore: 75,
+        isAlertTriggered: true,
+        alertMessage: 'Cảnh báo: Phát hiện tin mạo danh ăn theo Năm Lượng tử Gia Lai 2026',
+        topicTag: 'An ninh mạng',
+        engagementCount: 5200,
+        reachEstimate: 28000,
+        entities: [
+          { name: 'An ninh mạng', category: 'Organization' as const },
+          { name: 'Gia Lai', category: 'Location' as const }
+        ]
+      }
+    ];
+  }
 
   return [
     {
@@ -366,7 +503,7 @@ Yêu cầu QUAN TRỌNG:
           ...art,
           id: art.id || `ai-scan-${Date.now()}-${idx}`,
           scannedQuery: trimmedQuery,
-          url: sanitizeArticleUrl(art.url, trimmedQuery, art.sourceCategory, art.sourceName, isUrl, trimmedQuery)
+          url: sanitizeArticleUrl(art.url, trimmedQuery, art.sourceCategory, art.sourceName, isUrl, trimmedQuery, art.title)
         }));
 
         res.json({

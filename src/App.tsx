@@ -32,8 +32,10 @@ import {
   ArticleItem, 
   SearchFilterState, 
   SentimentStats, 
-  AlertNotification 
+  AlertNotification,
+  SourceCategory
 } from './types';
+import { getArticleExternalUrl } from './utils/urlHelper';
 
 import { 
   Radio, 
@@ -178,36 +180,172 @@ export default function App() {
     const isUrl = query.trim().startsWith('http://') || query.trim().startsWith('https://');
     const term = query.trim();
     const ts = new Date().toISOString();
-    const enc = encodeURIComponent(term);
+    const lowerTerm = term.toLowerCase();
 
-    const getValidUrl = (sourceCat: string, sourceName: string) => {
-      if (isUrl) return term;
-      const nameLower = sourceName.toLowerCase();
-      if (nameLower.includes('gia lai') || sourceCat === 'local_news') {
-        return `https://www.google.com/search?q=site:baogialai.com.vn+${enc}`;
-      }
-      if (nameLower.includes('vtv')) {
-        return `https://vtv.vn/tim-kiem.htm?keywords=${enc}`;
-      }
-      if (nameLower.includes('tuổi trẻ') || nameLower.includes('tuoitre')) {
-        return `https://tuoitre.vn/tim-kiem.htm?keywords=${enc}`;
-      }
-      if (sourceCat === 'social_media' || nameLower.includes('facebook')) {
-        return `https://www.facebook.com/search/posts?q=${enc}`;
-      }
-      if (sourceCat === 'international' || nameLower.includes('reuters')) {
-        return `https://www.reuters.com/site-search/?query=${enc}`;
-      }
-      return `https://news.google.com/search?q=${enc}&hl=vi-VN&gl=VN&ceid=VN:vi`;
+    if (lowerTerm.includes('lượng tử') || lowerTerm.includes('luong tu') || lowerTerm.includes('quantum')) {
+      return [
+        {
+          id: `scan-fb-${Date.now()}-1`,
+          title: `Chuỗi sự kiện Năm Lượng tử Gia Lai 2026`,
+          url: `https://www.google.com/search?q=site:baogialai.com.vn+"Chuỗi sự kiện Năm Lượng tử Gia Lai 2026"`,
+          scannedQuery: term,
+          sourceName: 'Báo Gia Lai điện tử',
+          sourceCategory: 'local_news',
+          publishedAt: ts,
+          summary: `UBND tỉnh Gia Lai tổ chức họp báo công bố Năm Lượng tử Gia Lai 2026 với chủ đề "Kết nối lượng tử - Làm chủ công nghệ - Đột phá phát triển".`,
+          contentSnippet: `UBND tỉnh Gia Lai công bố chuỗi hoạt động khoa học công nghệ quốc tế tầm vóc quốc gia về vật lý và tính toán lượng tử...`,
+          sentiment: 'positive',
+          sentimentScore: 96,
+          isNoise: false,
+          riskScore: 2,
+          topicTag: 'Khoa học & Công nghệ',
+          engagementCount: 28500,
+          reachEstimate: 190000,
+          entities: [
+            { name: 'UBND tỉnh Gia Lai', category: 'Organization' },
+            { name: 'Năm Lượng tử Gia Lai 2026', category: 'Keyword' }
+          ]
+        },
+        {
+          id: `scan-fb-${Date.now()}-2`,
+          title: `Những diễn giả nổi bật tại lễ khai mạc Năm Lượng tử Gia Lai 2026`,
+          url: `https://www.google.com/search?q=site:baogialai.com.vn+"Những diễn giả nổi bật tại lễ khai mạc Năm Lượng tử Gia Lai 2026"`,
+          scannedQuery: term,
+          sourceName: 'Báo Gia Lai điện tử',
+          sourceCategory: 'local_news',
+          publishedAt: ts,
+          summary: `Lễ khai mạc Năm Lượng tử Gia Lai 2026 quy tụ các nhà khoa học, giáo sư quốc tế và Việt Nam với các bài tham luận chiến lược.`,
+          contentSnippet: `Quy tụ các chuyên gia hàng đầu đến từ Pháp, Mỹ, Nhật Bản và các viện nghiên cứu vật lý hàng đầu Việt Nam...`,
+          sentiment: 'positive',
+          sentimentScore: 94,
+          isNoise: false,
+          riskScore: 3,
+          topicTag: 'Hội thảo Quốc tế',
+          engagementCount: 19200,
+          reachEstimate: 140000,
+          entities: [
+            { name: 'Gia Lai', category: 'Location' },
+            { name: 'Lượng tử 2026', category: 'Keyword' }
+          ]
+        },
+        {
+          id: `scan-fb-${Date.now()}-3`,
+          title: `Cuộc thi Hackathon quốc tế về Tính toán lượng tử tại Gia Lai`,
+          url: `https://www.google.com/search?q=site:baogialai.com.vn+"Cuộc thi Hackathon quốc tế về Tính toán lượng tử tại Gia Lai"`,
+          scannedQuery: term,
+          sourceName: 'Báo Gia Lai điện tử',
+          sourceCategory: 'local_news',
+          publishedAt: ts,
+          summary: `Thí sinh quốc tế và sinh viên công nghệ hội tụ tại Pleiku tranh tài lập trình và giải thuật lượng tử ứng dụng thực tiễn.`,
+          contentSnippet: `Vòng chung kết Hackathon thu hút 50 đội thi tài năng giải quyết các bài toán tối ưu hóa nông nghiệp và biến đổi khí hậu...`,
+          sentiment: 'positive',
+          sentimentScore: 95,
+          isNoise: false,
+          riskScore: 4,
+          topicTag: 'Cuộc thi & Sáng tạo',
+          engagementCount: 31000,
+          reachEstimate: 220000,
+          entities: [
+            { name: 'Pleiku', category: 'Location' },
+            { name: 'Hackathon Lượng tử', category: 'Organization' }
+          ]
+        },
+        {
+          id: `scan-fb-${Date.now()}-4`,
+          title: `VTV News: Toàn cảnh xu hướng công nghệ và truyền thông về Năm Lượng tử Gia Lai 2026`,
+          url: `https://vtv.vn/tim-kiem.htm?keywords=N%C4%83m%20L%C6%B0%E1%BB%A3ng%20t%E1%BB%AD%20Gia%20Lai%202026`,
+          scannedQuery: term,
+          sourceName: 'VTV News',
+          sourceCategory: 'central_news',
+          publishedAt: ts,
+          summary: `Đài Truyền hình Việt Nam ghi nhận sự bứt phá của Gia Lai trong việc tiên phong tổ chức các chuỗi sự kiện công nghệ cao.`,
+          contentSnippet: `Truyền hình quốc gia nhấn mạnh vị thế mới của Gia Lai trong bản đồ thu hút đầu tư tri thức và khoa học sáng tạo...`,
+          sentiment: 'positive',
+          sentimentScore: 91,
+          isNoise: false,
+          riskScore: 5,
+          topicTag: 'Chuyển đổi số & Khoa học',
+          engagementCount: 45000,
+          reachEstimate: 350000,
+          entities: [
+            { name: 'VTV', category: 'Organization' },
+            { name: 'Gia Lai', category: 'Location' }
+          ]
+        },
+        {
+          id: `scan-fb-${Date.now()}-5`,
+          title: `Báo Tuổi Trẻ: Đóng góp của hạt nhân khoa học trong Năm Lượng tử Gia Lai 2026`,
+          url: `https://tuoitre.vn/tim-kiem.htm?keywords=N%C4%83m%20L%C6%B0%E1%BB%A3ng%20t%E1%BB%AD%20Gia%20Lai%202026`,
+          scannedQuery: term,
+          sourceName: 'Báo Tuổi Trẻ',
+          sourceCategory: 'central_news',
+          publishedAt: ts,
+          summary: `Góc nhìn báo chí trung ương về tác động tích cực của sự kiện đến phát triển kinh tế tri thức tại Tây Nguyên.`,
+          contentSnippet: `Phát triển nguồn nhân lực công nghệ thông tin và công nghệ lượng tử là nền tảng bền vững cho khu vực...`,
+          sentiment: 'positive',
+          sentimentScore: 89,
+          isNoise: false,
+          riskScore: 6,
+          topicTag: 'Phát triển Bền vững',
+          engagementCount: 21000,
+          reachEstimate: 160000,
+          entities: [
+            { name: 'Tuổi Trẻ', category: 'Organization' },
+            { name: 'Tây Nguyên', category: 'Location' }
+          ]
+        },
+        {
+          id: `scan-fb-${Date.now()}-6`,
+          title: `Cảnh báo nhiễu: Xuất hiện trang tin mạo danh ăn theo Năm Lượng tử Gia Lai 2026`,
+          url: `https://www.facebook.com/search/posts?q=C%E1%BA%A3nh%20b%C3%A1o%20m%E1%BA%A1o%20danh%20N%C4%83m%20L%C6%B0%E1%BB%A3ng%20t%E1%BB%AD%20Gia%20Lai`,
+          scannedQuery: term,
+          sourceName: 'Trang Cảnh báo An ninh mạng',
+          sourceCategory: 'social_media',
+          publishedAt: ts,
+          summary: `Hệ thống AI ghi nhận bài đăng cá nhân quảng cáo khóa học lượng tử ảo giả mạo ban tổ chức nhằm trục lợi.`,
+          contentSnippet: `Cảnh báo người dân chỉ theo dõi thông tin chính thống từ Cổng thông tin điện tử tỉnh Gia Lai và Báo Gia Lai...`,
+          sentiment: 'negative',
+          sentimentScore: 88,
+          isNoise: true,
+          noiseReason: 'Mạo danh danh nghĩa sự kiện để câu view/bán khóa học ảo',
+          riskScore: 75,
+          isAlertTriggered: true,
+          alertMessage: 'Cảnh báo: Phát hiện tin mạo danh ăn theo Năm Lượng tử Gia Lai 2026',
+          topicTag: 'An ninh mạng',
+          engagementCount: 5200,
+          reachEstimate: 28000,
+          entities: [
+            { name: 'An ninh mạng', category: 'Organization' },
+            { name: 'Gia Lai', category: 'Location' }
+          ]
+        }
+      ];
+    }
+
+    const buildFallbackUrl = (title: string, sourceName: string, sourceCat: SourceCategory) => {
+      return getArticleExternalUrl({
+        title,
+        sourceName,
+        sourceCategory: sourceCat,
+        scannedQuery: term,
+        url: isUrl ? term : ''
+      });
     };
+
+    const title1 = isUrl 
+      ? `[Phân tích Link Gốc] Bài viết trực tuyến: ${term}`
+      : `Báo Gia Lai: Triển khai chương trình và chuỗi sự kiện trọng điểm về ${term}`;
+    const title2 = `VTV News: Toàn cảnh xu hướng phát triển và dư luận báo chí về ${term}`;
+    const title3 = `Báo Tuổi Trẻ: Đánh giá tác động xã hội và định hướng thông tin từ ${term}`;
+    const title4 = `Facebook Trending: Cư dân mạng thảo luận sôi nổi về bài viết / từ khóa ${term}`;
+    const title5 = `Reuters / TechAsia: Foreign coverage and media outlook on ${term}`;
+    const title6 = `Cảnh báo nhiễu: Xuất hiện thông tin chưa kiểm chứng ăn theo chủ đề ${term}`;
 
     return [
       {
         id: `scan-fb-${Date.now()}-1`,
-        title: isUrl 
-          ? `[Phân tích Link Gốc] Bài viết trực tuyến: ${term}`
-          : `Báo Gia Lai: Triển khai chương trình và chuỗi sự kiện trọng điểm về ${term}`,
-        url: getValidUrl('local_news', 'Báo Gia Lai'),
+        title: title1,
+        url: buildFallbackUrl(title1, 'Báo Gia Lai', 'local_news'),
         scannedQuery: term,
         sourceName: 'Báo Gia Lai (Điện tử)',
         sourceCategory: 'local_news',
@@ -228,8 +366,8 @@ export default function App() {
       },
       {
         id: `scan-fb-${Date.now()}-2`,
-        title: `VTV News: Toàn cảnh xu hướng phát triển và dư luận báo chí về ${term}`,
-        url: getValidUrl('central_news', 'VTV News'),
+        title: title2,
+        url: buildFallbackUrl(title2, 'VTV News', 'central_news'),
         scannedQuery: term,
         sourceName: 'VTV News',
         sourceCategory: 'central_news',
@@ -250,8 +388,8 @@ export default function App() {
       },
       {
         id: `scan-fb-${Date.now()}-3`,
-        title: `Báo Tuổi Trẻ: Đánh giá tác động xã hội và định hướng thông tin từ ${term}`,
-        url: getValidUrl('central_news', 'Báo Tuổi Trẻ'),
+        title: title3,
+        url: buildFallbackUrl(title3, 'Báo Tuổi Trẻ', 'central_news'),
         scannedQuery: term,
         sourceName: 'Báo Tuổi Trẻ',
         sourceCategory: 'central_news',
@@ -272,8 +410,8 @@ export default function App() {
       },
       {
         id: `scan-fb-${Date.now()}-4`,
-        title: `Facebook Trending: Cư dân mạng thảo luận sôi nổi về bài viết / từ khóa ${term}`,
-        url: getValidUrl('social_media', 'Facebook'),
+        title: title4,
+        url: buildFallbackUrl(title4, 'Facebook', 'social_media'),
         scannedQuery: term,
         sourceName: 'Facebook Group - Tin Tức Gia Lai 24h',
         sourceCategory: 'social_media',
@@ -294,8 +432,8 @@ export default function App() {
       },
       {
         id: `scan-fb-${Date.now()}-5`,
-        title: `Reuters / TechAsia: Foreign coverage and media outlook on ${term}`,
-        url: getValidUrl('international', 'Reuters'),
+        title: title5,
+        url: buildFallbackUrl(title5, 'Reuters', 'international'),
         scannedQuery: term,
         sourceName: 'Reuters International',
         sourceCategory: 'international',
@@ -316,8 +454,8 @@ export default function App() {
       },
       {
         id: `scan-fb-${Date.now()}-6`,
-        title: `Cảnh báo nhiễu: Xuất hiện thông tin chưa kiểm chứng ăn theo chủ đề ${term}`,
-        url: getValidUrl('social_media', 'Cảnh báo An ninh mạng'),
+        title: title6,
+        url: buildFallbackUrl(title6, 'Cảnh báo An ninh mạng', 'social_media'),
         scannedQuery: term,
         sourceName: 'Trang Cảnh báo An ninh mạng',
         sourceCategory: 'social_media',

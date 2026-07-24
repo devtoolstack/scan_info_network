@@ -19,6 +19,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { ArticleItem, SourceCategory } from '../types';
+import { getArticleExternalUrl } from '../utils/urlHelper';
 
 interface ArticleCardProps {
   article: ArticleItem;
@@ -138,7 +139,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
 
         {/* Title */}
         <h3 className="text-base font-bold text-slate-900 hover:text-cyan-600 transition-colors leading-snug mb-2">
-          <a href={article.url} target="_blank" rel="noopener noreferrer" className="flex items-start gap-1.5 group">
+          <a href={getArticleExternalUrl(article)} target="_blank" rel="noopener noreferrer" className="flex items-start gap-1.5 group">
             <span>{article.title}</span>
             <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-600 shrink-0 mt-1" />
           </a>
