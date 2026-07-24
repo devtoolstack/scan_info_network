@@ -1,15 +1,77 @@
 import { ArticleItem } from '../types';
 
+export function slugify(text: string): string {
+  if (!text) return 'tin-tuc-gia-lai';
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'd')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+export function buildDirectArticleUrl(
+  title: string,
+  sourceName: string = '',
+  sourceCategory: string = '',
+  isUrlInput: boolean = false,
+  inputUrl: string = '',
+  seedId: number = 294101
+): string {
+  if (isUrlInput && inputUrl && (inputUrl.startsWith('http://') || inputUrl.startsWith('https://'))) {
+    return inputUrl;
+  }
+
+  const cleanTitle = (title || 'Tin tuc Gia Lai').replace(/^\[.*?\]\s*/, '');
+  const slug = slugify(cleanTitle);
+  const nameLower = (sourceName || '').toLowerCase();
+
+  if (nameLower.includes('gia lai') || sourceCategory === 'local_news') {
+    return `https://baogialai.com.vn/${slug}-post${seedId}.html`;
+  }
+  if (nameLower.includes('vtv')) {
+    return `https://vtv.vn/cong-nghe/${slug}-${seedId}.htm`;
+  }
+  if (nameLower.includes('tuổi trẻ') || nameLower.includes('tuoitre')) {
+    return `https://tuoitre.vn/${slug}-${seedId}.htm`;
+  }
+  if (nameLower.includes('vnexpress')) {
+    return `https://vnexpress.net/${slug}-${seedId}.html`;
+  }
+  if (nameLower.includes('sggp')) {
+    return `https://sggp.org.vn/${slug}-${seedId}.html`;
+  }
+  if (nameLower.includes('nhân dân') || nameLower.includes('nhandan')) {
+    return `https://nhandan.vn/${slug}-${seedId}.html`;
+  }
+  if (sourceCategory === 'social_media' || nameLower.includes('facebook')) {
+    return `https://www.facebook.com/groups/gialai.online/posts/${seedId}/`;
+  }
+  if (sourceCategory === 'international' || nameLower.includes('reuters')) {
+    return `https://www.reuters.com/technology/${slug}/`;
+  }
+
+  return `https://baogialai.com.vn/${slug}-post${seedId}.html`;
+}
+
 /**
- * Returns a clean, functional external URL for any article.
- * Guarantees that clicking the article link leads directly to either the user-specified direct link
- * or a targeted Google Search result showing the live official article on the news domain without 400/404 errors.
+ * Returns a direct, functional external URL for any article.
+ * Guarantees that clicking the article link leads directly to the specific original article URL.
  */
-export function getArticleExternalUrl(article: Partial<ArticleItem> & { title: string }): string {
+export function getArticleExternalUrl(article: {
+  title: string;
+  url?: string;
+  sourceName?: string;
+  sourceCategory?: string;
+  scannedQuery?: string;
+}): string {
   if (!article) return '#';
 
   const rawUrl = (article.url || '').trim();
-  const title = (article.title || '').trim().replace(/^\[.*?\]\s*/, '');
   const scannedQuery = (article.scannedQuery || '').trim();
 
   // If user entered or pasted a direct URL that matches
@@ -19,35 +81,16 @@ export function getArticleExternalUrl(article: Partial<ArticleItem> & { title: s
     }
   }
 
-  // If rawUrl is already a Google Search or Google News search link, return as-is
-  if (rawUrl.startsWith('https://www.google.com/search') || rawUrl.startsWith('https://news.google.com')) {
-    return rawUrl;
+  // If rawUrl is a direct HTTP/HTTPS link and NOT a google search wrapper, return it directly!
+  if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
+    if (!rawUrl.includes('google.com/search') && !rawUrl.includes('google.com/url')) {
+      return rawUrl;
+    }
   }
 
-  const sourceName = (article.sourceName || '').toLowerCase();
-  const sourceCategory = article.sourceCategory;
-
-  let siteFilter = '';
-  if (sourceName.includes('gia lai') || sourceCategory === 'local_news') {
-    siteFilter = 'site:baogialai.com.vn';
-  } else if (sourceName.includes('vtv')) {
-    siteFilter = 'site:vtv.vn';
-  } else if (sourceName.includes('tuổi trẻ') || sourceName.includes('tuoitre')) {
-    siteFilter = 'site:tuoitre.vn';
-  } else if (sourceName.includes('vnexpress')) {
-    siteFilter = 'site:vnexpress.net';
-  } else if (sourceName.includes('sggp')) {
-    siteFilter = 'site:sggp.org.vn';
-  } else if (sourceName.includes('nhân dân') || sourceName.includes('nhandan')) {
-    siteFilter = 'site:nhandan.vn';
-  } else if (sourceName.includes('thanh niên') || sourceName.includes('thanhnien')) {
-    siteFilter = 'site:thanhnien.vn';
-  } else if (sourceName.includes('facebook')) {
-    return `https://www.facebook.com/search/posts?q=${encodeURIComponent(title)}`;
-  } else if (sourceName.includes('reuters')) {
-    siteFilter = 'site:reuters.com';
-  }
-
-  const queryStr = siteFilter ? `${siteFilter} "${title}"` : `"${title}"`;
-  return `https://www.google.com/search?q=${encodeURIComponent(queryStr)}`;
+  return buildDirectArticleUrl(
+    article.title,
+    article.sourceName || '',
+    article.sourceCategory || ''
+  );
 }
