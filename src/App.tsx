@@ -23,23 +23,15 @@ import {
 import { 
   UrlScannerTab 
 } from './components/UrlScannerTab';
-import { 
-  CrawlerConfigTab 
-} from './components/CrawlerConfigTab';
-import { 
-  NewCampaignModal 
-} from './components/NewCampaignModal';
 
 import { 
   INITIAL_ARTICLES, 
-  INITIAL_CAMPAIGNS, 
   INITIAL_ALERTS 
 } from './data/mockFeed';
 import { 
   ArticleItem, 
   SearchFilterState, 
   SentimentStats, 
-  MonitoringCampaign, 
   AlertNotification 
 } from './types';
 
@@ -48,22 +40,18 @@ import {
   BarChart3, 
   Bell, 
   Link as LinkIcon, 
-  SlidersHorizontal, 
   Sparkles, 
-  FileSpreadsheet, 
-  RefreshCw,
   Info,
-  CheckCircle2,
-  ListFilter
+  ListFilter,
+  Globe2,
+  CheckCircle2
 } from 'lucide-react';
 
 export default function App() {
-  const [campaigns, setCampaigns] = useState<MonitoringCampaign[]>(INITIAL_CAMPAIGNS);
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string>('camp-1');
   const [articles, setArticles] = useState<ArticleItem[]>(INITIAL_ARTICLES);
   const [alerts, setAlerts] = useState<AlertNotification[]>(INITIAL_ALERTS);
 
-  const [activeTab, setActiveTab] = useState<'feed' | 'analytics' | 'alerts' | 'url_scanner' | 'config'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'analytics' | 'alerts' | 'url_scanner'>('feed');
 
   const [filters, setFilters] = useState<SearchFilterState>({
     query: '',
@@ -76,9 +64,8 @@ export default function App() {
 
   const [isScanning, setIsScanning] = useState(false);
   const [activeDetailArticle, setActiveDetailArticle] = useState<ArticleItem | null>(null);
-  const [showNewCampaignModal, setShowNewCampaignModal] = useState(false);
   const [aiOverview, setAiOverview] = useState<string>(
-    'Dư luận truyền thông 24h qua về các dự án hạ tầng và kinh tế Gia Lai duy trì sắc thái Tích cực (68%). Đã chủ động lọc 12 nội dung tin rác rao bán đất nền trái phép.'
+    'Dư luận truyền thông 24h qua về các dự án hạ tầng, kinh tế, nông sản và đời sống xã hội duy trì sắc thái Tích cực (68%). Đã tích hợp hệ thống tự động lọc tin rác và spam.'
   );
 
   // Filtered Articles Computation
@@ -105,7 +92,7 @@ export default function App() {
         const matchesTitle = art.title.toLowerCase().includes(q);
         const matchesSummary = art.summary.toLowerCase().includes(q);
         const matchesSource = art.sourceName.toLowerCase().includes(q);
-        const matchesTopic = art.topicTag.toLowerCase().includes(q);
+        const matchesTopic = art.topicTag ? art.topicTag.toLowerCase().includes(q) : false;
         if (!matchesTitle && !matchesSummary && !matchesSource && !matchesTopic) {
           return false;
         }
@@ -181,11 +168,6 @@ export default function App() {
     setAlerts((prev) => prev.map((a) => ({ ...a, read: true })));
   };
 
-  const handleAddCampaign = (newCamp: MonitoringCampaign) => {
-    setCampaigns([newCamp, ...campaigns]);
-    setSelectedCampaignId(newCamp.id);
-  };
-
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col font-sans">
       
@@ -204,18 +186,17 @@ export default function App() {
           <div className="flex items-center space-x-1 sm:space-x-2 pb-px">
             
             {[
-              { id: 'feed', label: 'Luồng Tin tức Live', icon: <Radio className="w-4 h-4" /> },
-              { id: 'analytics', label: 'Báo cáo & Phân tích', icon: <BarChart3 className="w-4 h-4" /> },
-              { id: 'alerts', label: 'Trung tâm Cảnh báo', icon: <Bell className="w-4 h-4" /> },
+              { id: 'feed', label: 'Luồng Tin tức Live (50 Mới nhất)', icon: <Radio className="w-4 h-4" /> },
               { id: 'url_scanner', label: 'Soi Link AI', icon: <LinkIcon className="w-4 h-4" /> },
-              { id: 'config', label: 'Cấu hình Thu thập', icon: <SlidersHorizontal className="w-4 h-4" /> },
+              { id: 'alerts', label: 'Trung tâm Cảnh báo', icon: <Bell className="w-4 h-4" /> },
+              { id: 'analytics', label: 'Báo cáo & Thống kê', icon: <BarChart3 className="w-4 h-4" /> },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'border-cyan-600 text-cyan-600 bg-white/60 rounded-t-lg'
+                    ? 'border-cyan-600 text-cyan-600 bg-white/60 rounded-t-lg shadow-sm'
                     : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
                 }`}
               >
@@ -239,6 +220,19 @@ export default function App() {
         {activeTab === 'feed' && (
           <div className="space-y-6">
             
+            {/* Initial 50 Feed Notification Banner */}
+            <div className="p-3.5 bg-gradient-to-r from-cyan-50 via-slate-50 to-blue-50 border border-cyan-200/80 rounded-xl text-xs text-slate-700 flex items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center gap-2.5">
+                <Globe2 className="w-4 h-4 text-cyan-600 shrink-0" />
+                <span>
+                  <strong className="text-cyan-800 font-bold">Chế độ Mới vào Trang:</strong> Đang hiển thị <strong className="text-slate-900 font-bold">50 thông tin bài viết mới nhất</strong> tổng hợp từ báo Trung ương, báo Địa phương, Mạng xã hội và Báo Quốc tế.
+                </span>
+              </div>
+              <span className="hidden md:inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-cyan-200 rounded-lg text-[11px] font-semibold text-cyan-700 shrink-0">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Cập nhật 24/7
+              </span>
+            </div>
+
             {/* Unified Search & URL Bar */}
             <SearchScannerBar
               filters={filters}
@@ -269,7 +263,7 @@ export default function App() {
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <ListFilter className="w-4 h-4 text-cyan-600" />
-                Danh sách Bài viết Thu thập ({filteredArticles.length} kết quả)
+                Danh sách Bài viết Thu thập ({filteredArticles.length} bài)
               </h3>
               <span className="text-xs text-slate-500">
                 Sắp xếp: Mới nhất trước
@@ -282,7 +276,7 @@ export default function App() {
                 <Info className="w-8 h-8 text-slate-400 mx-auto" />
                 <h4 className="font-bold text-sm text-slate-700">Không tìm thấy bài viết phù hợp bộ lọc</h4>
                 <p className="text-xs text-slate-500">
-                  Thử đổi từ khóa hoặc tắt chế độ "Lọc Nhiễu AI" để xem toàn bộ tin tức.
+                  Thử nhập từ khóa khác hoặc bấm nút "Lọc Nhiễu AI: Tắt" để xem toàn bộ nội dung.
                 </p>
               </div>
             ) : (
@@ -301,9 +295,9 @@ export default function App() {
           </div>
         )}
 
-        {/* Tab 2: Analytics & Visual Charts */}
-        {activeTab === 'analytics' && (
-          <AnalyticsCharts articles={articles} />
+        {/* Tab 2: URL Inspector */}
+        {activeTab === 'url_scanner' && (
+          <UrlScannerTab />
         )}
 
         {/* Tab 3: Real-Time Alerts Center */}
@@ -316,14 +310,9 @@ export default function App() {
           />
         )}
 
-        {/* Tab 4: URL Inspector */}
-        {activeTab === 'url_scanner' && (
-          <UrlScannerTab />
-        )}
-
-        {/* Tab 5: Crawler Configuration */}
-        {activeTab === 'config' && (
-          <CrawlerConfigTab />
+        {/* Tab 4: Analytics & Visual Charts */}
+        {activeTab === 'analytics' && (
+          <AnalyticsCharts articles={articles} />
         )}
 
       </main>
@@ -333,14 +322,6 @@ export default function App() {
         <ArticleDetailModal
           article={activeDetailArticle}
           onClose={() => setActiveDetailArticle(null)}
-        />
-      )}
-
-      {/* New Campaign Modal */}
-      {showNewCampaignModal && (
-        <NewCampaignModal
-          onClose={() => setShowNewCampaignModal(false)}
-          onAddCampaign={handleAddCampaign}
         />
       )}
 
@@ -361,3 +342,4 @@ export default function App() {
     </div>
   );
 }
+
