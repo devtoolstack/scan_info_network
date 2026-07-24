@@ -100,7 +100,15 @@ export const SearchScannerBar: React.FC<SearchScannerBarProps> = ({
               setInputVal(e.target.value);
               onFilterChange({ query: e.target.value });
             }}
-            placeholder="Gõ từ khóa (ví dụ: 'Cao tốc Quy Nhơn Pleiku') HOẶC dán link bài viết (https://...)..."
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (inputVal.trim()) {
+                  onExecuteScan(inputVal.trim());
+                }
+              }
+            }}
+            placeholder="Gõ từ khóa (ví dụ: 'Năm lượng tử Gia Lai 2026') HOẶC dán link bài viết (https://...)..."
             className="w-full pl-12 pr-36 py-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent focus:bg-white transition-all shadow-inner"
           />
 

@@ -1,7 +1,8 @@
 {
-  "name": "react-example",
+  "name": "scan-info-network-gialai",
+  "version": "1.0.0",
+  "description": "Hệ thống giám sát, thu thập thông tin tự động trên Internet & Mạng xã hội tích hợp AI phân tích ngữ nghĩa, lọc nhiễu và cảnh báo thời gian thực.",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",

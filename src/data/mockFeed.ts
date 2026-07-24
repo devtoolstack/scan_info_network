@@ -729,7 +729,6 @@ export const INITIAL_ARTICLES: ArticleItem[] = [
     ],
     engagementCount: 17300,
     reachEstimate: 115000,
-    riskScore: 68,
     topicTag: 'Nông nghiệp & Thị trường'
   },
   {
